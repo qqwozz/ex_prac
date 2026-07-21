@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rubium — Тренажёр</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4F46E5; --primary-dark: #4338CA; --secondary: #7C3AED;
+            --success: #10B981; --success-light: #D1FAE5;
+            --error: #EF4444; --error-light: #FEE2E2;
+            --surface: #FFFFFF; --bg: #F8FAFC;
+            --text: #1E293B; --text-secondary: #64748B; --border: #E2E8F0;
+            --shadow: 0 4px 6px -1px rgba(0,0,0,0.07);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08);
+            --radius: 16px; --radius-sm: 12px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: linear-gradient(135deg, #F8FAFC 0%, #EEF2FF 100%);
+            min-height: 100vh; display: flex; justify-content: center; align-items: center;
+            padding: 20px; color: var(--text); -webkit-font-smoothing: antialiased;
+        }
+        .app { width: 100%; max-width: 440px; }
+        .screen { display: none; animation: fadeSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        .screen.active { display: block; }
+        @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Auth */
+        .auth-card {
+            background: var(--surface); border-radius: var(--radius);
+            padding: 36px 28px; box-shadow: var(--shadow-lg); border: 1px solid var(--border);
+        }
+        .auth-logo { text-align: center; margin-bottom: 28px; }
+        .auth-logo h1 {
+            font-size: 36px; font-weight: 800; letter-spacing: -0.03em;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .auth-logo p { color: var(--text-secondary); font-size: 14px; margin-top: 4px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label {
+            display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary);
+            margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em;
+        }
+        .form-input {
+            width: 100%; padding: 14px 16px; font-size: 16px; font-family: 'Inter', sans-serif;
+            border: 2px solid var(--border); border-radius: var(--radius-sm); outline: none;
+            transition: border-color 0.2s; text-align: center;
+        }
+        .form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,0.1); }
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 14px 28px; font-size: 16px; font-weight: 600;
+            font-family: 'Inter', sans-serif; border: none; border-radius: var(--radius-sm);
+            cursor: pointer; transition: all 0.2s ease; width: 100%;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white; box-shadow: 0 4px 14px rgba(79,70,229,0.3);
+        }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(79,70,229,0.4); }
+        .btn-primary:active { transform: scale(0.98); }
+        .btn-ghost { background: transparent; color: var(--primary); width: auto; font-weight: 600; }
+        .error-msg {
+            background: var(--error-light); color: var(--error); padding: 10px 14px;
+            border-radius: var(--radius-sm); font-size: 13px; font-weight: 500;
+            margin-bottom: 16px; display: none;
+        }
+
+        /* Dashboard */
+        .progress-bar { width: 100%; height: 4px; background: var(--border); border-radius: 2px; margin-bottom: 24px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); border-radius: 2px; transition: width 0.5s ease; width: 0%; }
+        .dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .dash-header h2 { font-size: 22px; font-weight: 700; }
+        .dash-header span { font-size: 13px; color: var(--text-secondary); cursor: pointer; }
+        .user-avatar {
+            width: 48px; height: 48px; border-radius: 50%; object-fit: cover;
+            border: 3px solid var(--primary); margin-bottom: 8px;
+        }
+        .user-info { text-align: center; margin-bottom: 24px; }
+        .user-info h3 { font-size: 20px; font-weight: 700; }
+        .user-info p { font-size: 13px; color: var(--text-secondary); }
+        .stat-cards { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+        .stat-card {
+            background: var(--surface); border-radius: var(--radius-sm); padding: 16px;
+            text-align: center; box-shadow: var(--shadow); border: 1px solid var(--border);
+        }
+        .stat-value { font-size: 24px; font-weight: 700; color: var(--primary); }
+        .stat-label { font-size: 11px; color: var(--text-secondary); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .menu-card {
+            background: var(--surface); border-radius: var(--radius); padding: 24px 20px;
+            text-align: center; cursor: pointer; transition: all 0.2s;
+            border: 1px solid var(--border); box-shadow: var(--shadow);
+        }
+        .menu-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); border-color: var(--primary); }
+        .menu-card .icon { font-size: 36px; margin-bottom: 8px; }
+        .menu-card .title { font-weight: 700; font-size: 15px; }
+        .menu-card .sub { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+
+        /* Task */
+        .task-card { background: var(--surface); border-radius: var(--radius); padding: 28px 24px; box-shadow: var(--shadow); border: 1px solid var(--border); }
+        .task-meta { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+        .tag { font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px; }
+        .tag-subject { background: #EEF2FF; color: var(--primary); }
+        .tag-topic { background: #F3E8FF; color: #7C3AED; }
+        .tag-difficulty { background: #FEF3C7; color: #D97706; }
+        .task-text { font-size: 16px; line-height: 1.7; margin-bottom: 20px; }
+        .task-text img { max-width: 100%; border-radius: var(--radius-sm); margin: 12px 0; }
+        .answer-input {
+            width: 100%; padding: 14px 16px; font-size: 18px; font-family: 'Inter', sans-serif;
+            font-weight: 600; border: 2px solid var(--border); border-radius: var(--radius-sm);
+            outline: none; text-align: center; transition: border-color 0.2s;
+        }
+        .answer-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,0.1); }
+        .answer-input.correct { border-color: var(--success); background: var(--success-light); }
+        .answer-input.incorrect { border-color: var(--error); background: var(--error-light); }
+        .result-block { border-radius: var(--radius-sm); padding: 20px; margin: 16px 0; animation: fadeSlideIn 0.3s ease; }
+        .result-block.correct { background: var(--success-light); border: 1px solid #A7F3D0; }
+        .result-block.incorrect { background: var(--error-light); border: 1px solid #FECACA; }
+        .result-icon { font-size: 32px; margin-bottom: 8px; }
+        .result-title { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+        .result-text { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+        .next-section { margin-top: 16px; display: flex; gap: 12px; }
+
+        @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
+        .shake { animation: shake 0.4s ease; }
+        @keyframes bounce { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
+        .bounce { animation: bounce 0.4s ease; }
+        .spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 60px auto; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- Login -->
+        <div class="screen active" id="loginScreen">
+            <div class="auth-card">
+                <div class="auth-logo">
+                    <h1>Rubium</h1>
+                    <p>Войди, чтобы продолжить подготовку</p>
+                </div>
+                <div class="error-msg" id="loginError"></div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" class="form-input" id="loginEmail" placeholder="email@example.com" value="nsdmlk@yandex.ru">
+                </div>
+                <button class="btn btn-primary" onclick="handleLogin()">Войти</button>
+            </div>
+        </div>
+
+        <!-- Dashboard -->
+        <div class="screen" id="dashboardScreen">
+            <div class="progress-bar"><div class="progress-fill" id="dashProgress"></div></div>
+            <div class="user-info">
+                <img class="user-avatar" id="dashAvatar" src="" alt="">
+                <h3 id="dashName">...</h3>
+                <p id="dashRole"></p>
+            </div>
+            <div class="stat-cards">
+                <div class="stat-card"><div class="stat-value" id="statSolved">0</div><div class="stat-label">Решено</div></div>
+                <div class="stat-card"><div class="stat-value" id="statCorrect">0</div><div class="stat-label">Верно</div></div>
+                <div class="stat-card"><div class="stat-value" id="statAccuracy">—</div><div class="stat-label">Точность</div></div>
+            </div>
+            <div class="menu-grid">
+                <div class="menu-card" onclick="startTraining()">
+                    <div class="icon">⚡</div><div class="title">Тренировка</div><div class="sub">Решать задания</div>
+                </div>
+                <div class="menu-card" onclick="showStudyMap()">
+                    <div class="icon">🗺️</div><div class="title">Карта обучения</div><div class="sub">Скоро</div>
+                </div>
+                <div class="menu-card">
+                    <div class="icon">📊</div><div class="title">Статистика</div><div class="sub">Скоро</div>
+                </div>
+                <div class="menu-card">
+                    <div class="icon">👤</div><div class="title">Профиль</div><div class="sub">Скоро</div>
+                </div>
+            </div>
+            <div style="text-align:center;margin-top:24px;">
+                <button class="btn btn-ghost" onclick="logout()">Выйти</button>
+            </div>
+        </div>
+
+        <!-- Subject -->
+        <div class="screen" id="subjectScreen">
+            <div class="auth-card">
+                <div class="auth-logo"><h1>Выбери предмет</h1></div>
+                <button class="btn btn-primary" onclick="startSession('math')" style="margin-bottom:12px;">📐 Математика</button>
+                <button class="btn btn-primary" onclick="startSession('informatics')">💻 Информатика</button>
+                <div style="text-align:center;margin-top:16px;">
+                    <button class="btn btn-ghost" onclick="showScreen('dashboardScreen')">← Назад</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Task -->
+        <div class="screen" id="taskScreen">
+            <div class="task-card" id="taskCard">
+                <div class="task-meta" id="taskMeta"></div>
+                <div class="task-text" id="taskText"></div>
+                <div id="answerSection">
+                    <input type="text" class="answer-input" id="answerInput" placeholder="Введи ответ" autocomplete="off">
+                    <button class="btn btn-primary" id="submitBtn" onclick="submitAnswer()" style="margin-top:12px;">Ответить ✨</button>
+                </div>
+                <div id="resultBlock"></div>
+                <div class="next-section" id="nextSection" style="display:none;">
+                    <button class="btn btn-primary" onclick="nextTask()">Дальше →</button>
+                    <button class="btn btn-ghost" onclick="showScreen('dashboardScreen')">На главную</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading -->
+        <div class="screen" id="loadingScreen"><div class="spinner"></div></div>
+    </div>
+
+    <script>
+        const API = 'http://localhost:5080';
+        let currentUser = null;
+        let currentTask = null;
+        let currentSubject = null;
+
+        // Init
+        const saved = localStorage.getItem('rubium_user');
+        if (saved) {
+            currentUser = JSON.parse(saved);
+            showScreen('dashboardScreen');
+            loadDashboard();
+        }
+
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        // Auth
+        async function handleLogin() {
+            const email = document.getElementById('loginEmail').value.trim();
+            const errEl = document.getElementById('loginError');
+            if (!email) { errEl.textContent = 'Введи email'; errEl.style.display = 'block'; return; }
+
+            try {
+                const r = await fetch(`${API}/api/v1/auth/login`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({email, password: ''})
+                });
+                const data = await r.json();
+                if (!r.ok) { errEl.textContent = data.error; errEl.style.display = 'block'; return; }
+
+                currentUser = data;
+                localStorage.setItem('rubium_user', JSON.stringify(data));
+                errEl.style.display = 'none';
+                showScreen('dashboardScreen');
+                loadDashboard();
+            } catch (e) {
+                errEl.textContent = 'Ошибка соединения';
+                errEl.style.display = 'block';
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('rubium_user');
+            localStorage.removeItem('rubium_stats');
+            currentUser = null;
+            showScreen('loginScreen');
+        }
+
+        // Dashboard
+        function loadDashboard() {
+            if (!currentUser) return;
+            document.getElementById('dashName').textContent = currentUser.first_name || 'ученик';
+            document.getElementById('dashRole').textContent = currentUser.role === 'admin' ? 'Преподаватель' : 'Ученик';
+            document.getElementById('dashAvatar').src = currentUser.avatar_url || '';
+            updateDashStats();
+        }
+
+        function updateDashStats() {
+            const s = JSON.parse(localStorage.getItem('rubium_stats') || '{"solved":0,"correct":0}');
+            document.getElementById('statSolved').textContent = s.solved;
+            document.getElementById('statCorrect').textContent = s.correct;
+            document.getElementById('statAccuracy').textContent = s.solved > 0 ? Math.round((s.correct/s.solved)*100)+'%' : '—';
+            document.getElementById('dashProgress').style.width = s.solved > 0 ? (s.correct/s.solved)*100+'%' : '0%';
+        }
+
+        function startTraining() { showScreen('subjectScreen'); }
+        function showStudyMap() { alert('Карта обучения — в разработке 🗺️'); }
+
+        // Tasks
+        async function startSession(subject) {
+            currentSubject = subject;
+            showScreen('loadingScreen');
+            await loadTask();
+            showScreen('taskScreen');
+        }
+
+        async function loadTask() {
+            try {
+                const r = await fetch(`${API}/api/v1/tasks?subject=${currentSubject}&limit=1`);
+                const tasks = await r.json();
+                currentTask = tasks && tasks.length > 0 ? tasks[0] : null;
+            } catch (e) { currentTask = null; }
+            renderTask();
+        }
+
+        function renderTask() {
+            if (!currentTask) {
+                document.getElementById('taskText').innerHTML = '<p>Нет заданий.</p>';
+                document.getElementById('taskMeta').innerHTML = '';
+                document.getElementById('answerSection').style.display = 'none';
+                document.getElementById('resultBlock').innerHTML = '';
+                document.getElementById('nextSection').innerHTML = '<button class="btn btn-ghost" onclick="showScreen(\'subjectScreen\')">← Назад</button>';
+                document.getElementById('nextSection').style.display = 'block';
+                return;
+            }
+            document.getElementById('taskMeta').innerHTML = `
+                <span class="tag tag-subject">${currentTask.subject==='math'?'📐 Математика':'💻 Информатика'}</span>
+                <span class="tag tag-topic">${currentTask.topic||'Без темы'}</span>
+                <span class="tag tag-difficulty">${'⭐'.repeat(currentTask.difficulty||1)}</span>`;
+            document.getElementById('taskText').innerHTML = currentTask.text
+                .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g,'<em>$1</em>')
+                .replace(/!\[.*?\]\((.*?)\)/g,'<img src="$1" style="max-width:100%;border-radius:12px;margin:12px 0;">')
+                .replace(/\n/g,'<br>');
+            document.getElementById('answerInput').value = '';
+            document.getElementById('answerInput').className = 'answer-input';
+            document.getElementById('answerSection').style.display = 'block';
+            document.getElementById('submitBtn').disabled = false;
+            document.getElementById('resultBlock').innerHTML = '';
+            document.getElementById('nextSection').style.display = 'none';
+            document.getElementById('answerInput').focus();
+        }
+
+        async function submitAnswer() {
+            const answer = document.getElementById('answerInput').value.trim();
+            if (!answer) return;
+            document.getElementById('submitBtn').disabled = true;
+            try {
+                const r = await fetch(`${API}/api/v1/check`, {
+                    method:'POST',
+                    headers:{'Content-Type':'application/json'},
+                    body:JSON.stringify({task_id:currentTask.id, answer})
+                });
+                const result = await r.json();
+                const s = JSON.parse(localStorage.getItem('rubium_stats')||'{"solved":0,"correct":0}');
+                s.solved++; if(result.correct) s.correct++;
+                localStorage.setItem('rubium_stats', JSON.stringify(s));
+                showResult(result);
+            } catch(e) { document.getElementById('submitBtn').disabled = false; }
+        }
+
+        function showResult(result) {
+            const input = document.getElementById('answerInput');
+            const rb = document.getElementById('resultBlock');
+            const ns = document.getElementById('nextSection');
+            const card = document.getElementById('taskCard');
+            if(result.correct) {
+                input.className='answer-input correct';
+                rb.innerHTML=`<div class="result-block correct bounce"><div class="result-icon">🎉</div><div class="result-title">Правильно!</div><div class="result-text">${result.explanation||'Отлично!'}</div></div>`;
+            } else {
+                input.className='answer-input incorrect';
+                card.classList.add('shake'); setTimeout(()=>card.classList.remove('shake'),400);
+                rb.innerHTML=`<div class="result-block incorrect"><div class="result-icon">🤔</div><div class="result-title">Не совсем</div><div class="result-text">Ответ: <strong>${result.correct_answer}</strong><br>${result.explanation||''}</div></div>`;
+            }
+            document.getElementById('answerSection').style.display='none';
+            ns.style.display='flex';
+        }
+
+        function nextTask() {
+            showScreen('loadingScreen');
+            loadTask().then(()=>showScreen('taskScreen'));
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if(e.key==='Enter' && document.getElementById('loginScreen').classList.contains('active')) handleLogin();
+            if(e.key==='Enter' && document.getElementById('taskScreen').classList.contains('active')) {
+                const sb = document.getElementById('submitBtn');
+                if(!sb.disabled) submitAnswer();
+                else if(document.getElementById('nextSection').style.display!=='none') nextTask();
+            }
+        });
+    </script>
+</body>
+</html>

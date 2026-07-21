@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rubium — Вход</title>
+    <link rel="icon" type="image/png" href="data/logo.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Unbounded:wght@600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase.js"></script>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{
+            font-family:'Inter',sans-serif;background:#FAF8FC;color:#1F2937;
+            min-height:100vh;display:flex;align-items:center;justify-content:center;
+            position:relative;overflow:hidden;-webkit-font-smoothing:antialiased
+        }
+        body::before,body::after{
+            content:'';position:fixed;border-radius:50%;pointer-events:none;z-index:0;filter:blur(140px);opacity:0.04
+        }
+        body::before{width:620px;height:620px;background:#8B5CF6;top:-180px;right:-180px;animation:driftA 28s ease-in-out infinite}
+        body::after{width:460px;height:460px;background:#E11D8D;bottom:-130px;left:-130px;animation:driftB 32s ease-in-out infinite}
+        @keyframes driftA{0%,100%{transform:translate(0,0)}33%{transform:translate(-40px,30px)}66%{transform:translate(20px,-15px)}}
+        @keyframes driftB{0%,100%{transform:translate(0,0)}33%{transform:translate(30px,-25px)}66%{transform:translate(-15px,30px)}}
+
+        .auth-box{
+            background:rgba(255,255,255,0.65);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);
+            padding:44px 36px;border-radius:24px;width:90%;max-width:420px;
+            box-shadow:0 20px 50px rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.1);
+            position:relative;z-index:1;animation:fadeInUp 0.5s ease
+        }
+        @keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+
+        .logo{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:6px;text-decoration:none}
+        .logo img{width:42px;height:42px;object-fit:contain;filter:drop-shadow(0 4px 8px rgba(139,92,246,0.15))}
+        .logo-text{font-family:'Unbounded',sans-serif;font-size:1.4rem;font-weight:800;color:#1F2937;letter-spacing:-1px}
+        .logo-text span{background:linear-gradient(135deg,#8B5CF6,#E11D8D);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+        .subtitle{text-align:center;color:#9CA3AF;margin-bottom:32px;font-size:0.88rem;font-weight:500}
+
+        .form-group{margin-bottom:16px}
+        .form-group label{display:block;margin-bottom:8px;font-weight:700;color:#6B7280;font-size:0.7rem;text-transform:uppercase;letter-spacing:1.5px;font-family:'JetBrains Mono',monospace}
+        .form-group input{
+            width:100%;padding:13px 16px;border:2px solid rgba(139,92,246,0.1);border-radius:14px;
+            font-family:inherit;font-size:0.92rem;background:rgba(255,255,255,0.5);color:#1F2937;
+            transition:all 0.3s ease;letter-spacing:-0.2px
+        }
+        .form-group input:focus{outline:none;border-color:rgba(139,92,246,0.35);box-shadow:0 0 0 4px rgba(139,92,246,0.04);background:rgba(255,255,255,0.8)}
+        .form-group input::placeholder{color:#B0B7C3}
+
+        .btn{width:100%;padding:14px;border:none;border-radius:50px;font-family:inherit;font-size:0.92rem;font-weight:700;cursor:pointer;transition:all 0.3s ease;letter-spacing:-0.3px}
+        .btn-primary{background:linear-gradient(135deg,#8B5CF6,#7C3AED);color:#fff;margin:6px 0 18px;box-shadow:0 6px 18px rgba(139,92,246,0.18)}
+        .btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(139,92,246,0.3);background:linear-gradient(135deg,#7C3AED,#6D28D9)}
+
+        .divider{display:flex;align-items:center;gap:14px;margin:20px 0;color:#9CA3AF;font-size:0.68rem;text-transform:uppercase;letter-spacing:2px;font-weight:700;font-family:'JetBrains Mono',monospace}
+        .divider::before,.divider::after{content:'';flex:1;height:1px;background:rgba(139,92,246,0.08)}
+
+        .oauth-row{display:flex;gap:8px;margin-bottom:8px}
+        .btn-oauth{
+            flex:1;padding:10px 6px;border-radius:12px;border:1.5px solid rgba(139,92,246,0.1);
+            background:rgba(255,255,255,0.4);font-family:inherit;font-size:0.76rem;font-weight:600;
+            cursor:pointer;transition:all 0.25s ease;color:#6B7280;text-align:center
+        }
+        .btn-oauth:hover{background:rgba(255,255,255,0.7);border-color:rgba(139,92,246,0.3);color:#1F2937;transform:translateY(-1px)}
+
+        .link{text-align:center;margin-top:18px;font-size:0.85rem;color:#9CA3AF}
+        .link a{color:#8B5CF6;text-decoration:none;font-weight:600}
+        .link a:hover{text-decoration:underline}
+
+        .error{background:rgba(239,68,68,0.04);color:#EF4444;padding:12px 14px;border-radius:12px;margin-bottom:18px;display:none;font-size:0.8rem;border:1.5px solid rgba(239,68,68,0.12);font-weight:500;text-align:center}
+
+        .back-link{text-align:center;margin-top:16px;font-size:0.8rem}
+        .back-link a{color:#9CA3AF;text-decoration:none;display:inline-flex;align-items:center;gap:5px;transition:color 0.3s}
+        .back-link a:hover{color:#8B5CF6}
+    </style>
+</head>
+<body>
+    <div class="auth-box">
+        <a href="index.html" class="logo">
+            <div class="logo-text"><span>Rub</span>ium</div>
+        </a>
+        <p class="subtitle">Тренажёр для подготовки к экзаменам</p>
+
+        <div class="error" id="error"></div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="email" placeholder="max@example.com" required autocomplete="email">
+            </div>
+            <div class="form-group">
+                <label>Пароль</label>
+                <input type="password" id="password" placeholder="Ваш пароль" required autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn btn-primary">Войти</button>
+        </form>
+
+        <div class="divider">или</div>
+
+        <div class="oauth-row">
+            <button class="btn-oauth" onclick="loginWithOAuth('vk')">VK ID</button>
+            <button class="btn-oauth" onclick="loginWithOAuth('yandex')">Yandex ID</button>
+        </div>
+
+        <div class="link">Нет аккаунта? <a href="register.html">Зарегистрироваться</a></div>
+        <div class="back-link"><a href="index.html"><i class="fas fa-arrow-left"></i> На главную</a></div>
+    </div>
+
+    <script>
+        const errorEl = document.getElementById('error');
+        function showError(msg) {
+            errorEl.textContent = msg;
+            errorEl.style.display = 'block';
+            setTimeout(() => errorEl.style.display = 'none', 5000);
+        }
+
+        supabase.auth.signOut();
+
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            if (!email || !password) { showError('Заполните email и пароль'); return; }
+
+            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error) {
+                showError(error.message.includes('Invalid login credentials') ? 'Неверный email или пароль' : error.message);
+                return;
+            }
+            if (!data.user) { showError('Ошибка входа'); return; }
+            window.location.href = 'dashboard.html';
+        });
+
+        async function loginWithOAuth(provider) {
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider,
+                options: { redirectTo: window.location.origin + '/trainer.html' }
+            });
+            if (error) showError('Ошибка входа');
+        }
+    </script>
+</body>
+</html>
