@@ -2,389 +2,283 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rubium — Тренажёр</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Rubium — Главная</title>
+    <link rel="icon" type="image/png" href="data/logo.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Unbounded:wght@600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase.js"></script>
     <style>
         :root {
-            --primary: #4F46E5; --primary-dark: #4338CA; --secondary: #7C3AED;
-            --success: #10B981; --success-light: #D1FAE5;
-            --error: #EF4444; --error-light: #FEE2E2;
-            --surface: #FFFFFF; --bg: #F8FAFC;
-            --text: #1E293B; --text-secondary: #64748B; --border: #E2E8F0;
-            --shadow: 0 4px 6px -1px rgba(0,0,0,0.07);
-            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08);
-            --radius: 16px; --radius-sm: 12px;
+            --bg: #0F0F1A;
+            --surface: rgba(255,255,255,0.03);
+            --surface-hover: rgba(255,255,255,0.06);
+            --glass: rgba(255,255,255,0.04);
+            --glass-border: rgba(255,255,255,0.06);
+            --brand: #A78BFA;
+            --brand-glow: rgba(167,139,250,0.15);
+            --accent: #F472B6;
+            --success: #34D399;
+            --warning: #FBBF24;
+            --danger: #F87171;
+            --text: #F1F5F9;
+            --text-secondary: #94A3B8;
+            --text-muted: #64748B;
+            --radius: 24px;
+            --radius-sm: 16px;
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Inter', -apple-system, sans-serif;
-            background: linear-gradient(135deg, #F8FAFC 0%, #EEF2FF 100%);
-            min-height: 100vh; display: flex; justify-content: center; align-items: center;
-            padding: 20px; color: var(--text); -webkit-font-smoothing: antialiased;
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{
+            font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--text);
+            min-height:100vh;min-height:100dvh;-webkit-font-smoothing:antialiased;
+            display:flex;flex-direction:column;overflow-x:hidden;
         }
-        .app { width: 100%; max-width: 440px; }
-        .screen { display: none; animation: fadeSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-        .screen.active { display: block; }
-        @keyframes fadeSlideIn {
-            from { opacity: 0; transform: translateY(12px); }
-            to { opacity: 1; transform: translateY(0); }
+        body::before{
+            content:'';position:fixed;top:-300px;left:-300px;width:800px;height:800px;
+            background:radial-gradient(circle,rgba(167,139,250,0.06),transparent 70%);
+            pointer-events:none;z-index:0;
         }
-
-        /* Auth */
-        .auth-card {
-            background: var(--surface); border-radius: var(--radius);
-            padding: 36px 28px; box-shadow: var(--shadow-lg); border: 1px solid var(--border);
-        }
-        .auth-logo { text-align: center; margin-bottom: 28px; }
-        .auth-logo h1 {
-            font-size: 36px; font-weight: 800; letter-spacing: -0.03em;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-        }
-        .auth-logo p { color: var(--text-secondary); font-size: 14px; margin-top: 4px; }
-        .form-group { margin-bottom: 16px; }
-        .form-group label {
-            display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary);
-            margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em;
-        }
-        .form-input {
-            width: 100%; padding: 14px 16px; font-size: 16px; font-family: 'Inter', sans-serif;
-            border: 2px solid var(--border); border-radius: var(--radius-sm); outline: none;
-            transition: border-color 0.2s; text-align: center;
-        }
-        .form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,0.1); }
-        .btn {
-            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-            padding: 14px 28px; font-size: 16px; font-weight: 600;
-            font-family: 'Inter', sans-serif; border: none; border-radius: var(--radius-sm);
-            cursor: pointer; transition: all 0.2s ease; width: 100%;
-        }
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white; box-shadow: 0 4px 14px rgba(79,70,229,0.3);
-        }
-        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(79,70,229,0.4); }
-        .btn-primary:active { transform: scale(0.98); }
-        .btn-ghost { background: transparent; color: var(--primary); width: auto; font-weight: 600; }
-        .error-msg {
-            background: var(--error-light); color: var(--error); padding: 10px 14px;
-            border-radius: var(--radius-sm); font-size: 13px; font-weight: 500;
-            margin-bottom: 16px; display: none;
+        body::after{
+            content:'';position:fixed;bottom:-250px;right:-250px;width:700px;height:700px;
+            background:radial-gradient(circle,rgba(244,114,182,0.05),transparent 70%);
+            pointer-events:none;z-index:0;
         }
 
-        /* Dashboard */
-        .progress-bar { width: 100%; height: 4px; background: var(--border); border-radius: 2px; margin-bottom: 24px; overflow: hidden; }
-        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); border-radius: 2px; transition: width 0.5s ease; width: 0%; }
-        .dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .dash-header h2 { font-size: 22px; font-weight: 700; }
-        .dash-header span { font-size: 13px; color: var(--text-secondary); cursor: pointer; }
-        .user-avatar {
-            width: 48px; height: 48px; border-radius: 50%; object-fit: cover;
-            border: 3px solid var(--primary); margin-bottom: 8px;
-        }
-        .user-info { text-align: center; margin-bottom: 24px; }
-        .user-info h3 { font-size: 20px; font-weight: 700; }
-        .user-info p { font-size: 13px; color: var(--text-secondary); }
-        .stat-cards { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 24px; }
-        .stat-card {
-            background: var(--surface); border-radius: var(--radius-sm); padding: 16px;
-            text-align: center; box-shadow: var(--shadow); border: 1px solid var(--border);
-        }
-        .stat-value { font-size: 24px; font-weight: 700; color: var(--primary); }
-        .stat-label { font-size: 11px; color: var(--text-secondary); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
-        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .menu-card {
-            background: var(--surface); border-radius: var(--radius); padding: 24px 20px;
-            text-align: center; cursor: pointer; transition: all 0.2s;
-            border: 1px solid var(--border); box-shadow: var(--shadow);
-        }
-        .menu-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); border-color: var(--primary); }
-        .menu-card .icon { font-size: 36px; margin-bottom: 8px; }
-        .menu-card .title { font-weight: 700; font-size: 15px; }
-        .menu-card .sub { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+        .app{display:flex;flex-direction:column;min-height:100vh;min-height:100dvh;position:relative;z-index:1}
 
-        /* Task */
-        .task-card { background: var(--surface); border-radius: var(--radius); padding: 28px 24px; box-shadow: var(--shadow); border: 1px solid var(--border); }
-        .task-meta { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
-        .tag { font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px; }
-        .tag-subject { background: #EEF2FF; color: var(--primary); }
-        .tag-topic { background: #F3E8FF; color: #7C3AED; }
-        .tag-difficulty { background: #FEF3C7; color: #D97706; }
-        .task-text { font-size: 16px; line-height: 1.7; margin-bottom: 20px; }
-        .task-text img { max-width: 100%; border-radius: var(--radius-sm); margin: 12px 0; }
-        .answer-input {
-            width: 100%; padding: 14px 16px; font-size: 18px; font-family: 'Inter', sans-serif;
-            font-weight: 600; border: 2px solid var(--border); border-radius: var(--radius-sm);
-            outline: none; text-align: center; transition: border-color 0.2s;
+        .topbar{
+            display:flex;align-items:center;justify-content:space-between;
+            padding:16px 24px;flex-shrink:0;
         }
-        .answer-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,0.1); }
-        .answer-input.correct { border-color: var(--success); background: var(--success-light); }
-        .answer-input.incorrect { border-color: var(--error); background: var(--error-light); }
-        .result-block { border-radius: var(--radius-sm); padding: 20px; margin: 16px 0; animation: fadeSlideIn 0.3s ease; }
-        .result-block.correct { background: var(--success-light); border: 1px solid #A7F3D0; }
-        .result-block.incorrect { background: var(--error-light); border: 1px solid #FECACA; }
-        .result-icon { font-size: 32px; margin-bottom: 8px; }
-        .result-title { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
-        .result-text { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
-        .next-section { margin-top: 16px; display: flex; gap: 12px; }
+        .brand{font-family:'Unbounded',sans-serif;font-size:1.2rem;font-weight:800;letter-spacing:-1px;color:var(--text)}
+        .brand span{background:linear-gradient(135deg,var(--brand),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+        .user-name-top{
+            font-size:0.82rem;font-weight:600;color:var(--text-secondary);
+            padding:8px 16px;background:var(--glass);border:1px solid var(--glass-border);
+            border-radius:20px;backdrop-filter:blur(20px);
+        }
 
-        @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
-        .shake { animation: shake 0.4s ease; }
-        @keyframes bounce { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
-        .bounce { animation: bounce 0.4s ease; }
-        .spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 60px auto; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        .content{
+            flex:1;display:grid;grid-template-columns:1fr 1fr;
+            grid-template-rows:auto auto auto;
+            gap:16px;padding:8px 24px 100px;
+        }
+        @keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+
+        /* Hero — spans full width */
+        .hero-card{
+            grid-column:1/-1;
+            background:linear-gradient(135deg,rgba(167,139,250,0.1),rgba(244,114,182,0.06));
+            border:1px solid rgba(167,139,250,0.1);border-radius:var(--radius);
+            padding:28px 28px 24px;position:relative;overflow:hidden;
+            animation:fadeUp 0.5s ease;
+            display:flex;align-items:center;justify-content:space-between;
+            gap:20px;flex-wrap:wrap;
+        }
+        .hero-card::after{
+            content:'';position:absolute;top:-40px;right:-40px;width:160px;height:160px;
+            background:radial-gradient(circle,rgba(167,139,250,0.25),transparent 70%);
+            border-radius:50%;
+        }
+        .hero-left{position:relative;z-index:1;min-width:0}
+        .hero-greeting{font-size:0.85rem;color:var(--text-secondary);margin-bottom:6px}
+        .hero-name{font-size:2.2rem;font-weight:800;letter-spacing:-1px}
+        .hero-name span{background:linear-gradient(135deg,var(--brand),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+        .hero-stats{display:flex;gap:24px;margin-top:16px}
+        .hero-stat .num{font-size:1.3rem;font-weight:800;letter-spacing:-0.5px}
+        .hero-stat .lbl{font-size:0.62rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px;font-family:'JetBrains Mono',monospace}
+        .num.purple{color:var(--brand)} .num.green{color:var(--success)} .num.amber{color:var(--warning)}
+
+        .hero-actions{display:flex;flex-direction:column;gap:10px;position:relative;z-index:1;flex-shrink:0}
+        .hero-btn{
+            display:flex;align-items:center;gap:10px;padding:14px 22px;
+            border-radius:var(--radius-sm);font-weight:700;font-size:0.88rem;
+            cursor:pointer;transition:all 0.3s;border:none;font-family:inherit;
+            text-decoration:none;letter-spacing:-0.3px;white-space:nowrap;
+            min-width:180px;justify-content:center;
+        }
+        .hero-btn.daily{
+            background:linear-gradient(135deg,#FBBF24,#F59E0B);
+            color:#0F0F1A;box-shadow:0 8px 28px rgba(245,158,11,0.25);
+        }
+        .hero-btn.daily:hover{transform:translateY(-2px);box-shadow:0 14px 36px rgba(245,158,11,0.35)}
+        .hero-btn.story{
+            background:linear-gradient(135deg,var(--brand),#8B5CF6);
+            color:#fff;box-shadow:0 8px 28px rgba(139,92,246,0.25);
+        }
+        .hero-btn.story:hover{transform:translateY(-2px);box-shadow:0 14px 36px rgba(139,92,246,0.35)}
+
+        /* Glass card */
+        .glass-card{
+            background:var(--glass);border:1px solid var(--glass-border);
+            border-radius:var(--radius);padding:22px 20px;
+            backdrop-filter:blur(20px);animation:fadeUp 0.6s ease;
+            display:flex;flex-direction:column;justify-content:center;
+        }
+        .card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+        .card-title{font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted);font-family:'JetBrains Mono',monospace}
+        .card-badge{font-size:0.6rem;color:var(--brand);font-family:'JetBrains Mono',monospace;font-weight:600;text-decoration:none}
+
+        .week-dots{display:flex;gap:6px}
+        .week-dot{
+            flex:1;aspect-ratio:1;border-radius:50%;transition:all 0.3s;
+            background:rgba(255,255,255,0.03);border:1.5px solid rgba(255,255,255,0.06);
+            display:flex;align-items:center;justify-content:center;
+            font-size:0.55rem;color:var(--text-muted);font-family:'JetBrains Mono',monospace;
+        }
+        .week-dot.done{background:rgba(52,211,153,0.12);border-color:var(--success);color:var(--success)}
+        .week-dot.miss{background:rgba(248,113,113,0.08);border-color:var(--danger);color:var(--danger)}
+        .week-dot.today{background:rgba(167,139,250,0.12);border-color:var(--brand);color:var(--brand);box-shadow:0 0 12px var(--brand-glow)}
+
+        .topics-row{display:flex;gap:8px;flex-wrap:wrap}
+        .topic-chip{
+            padding:8px 14px;border-radius:18px;font-size:0.72rem;font-weight:600;
+            background:var(--glass);border:1.5px solid var(--glass-border);
+            cursor:pointer;transition:all 0.25s;text-decoration:none;color:var(--text-secondary);
+            white-space:nowrap;
+        }
+        .topic-chip:hover{background:var(--surface-hover);border-color:rgba(167,139,250,0.3);color:var(--text);transform:translateY(-1px)}
+        .topic-chip.done{border-color:rgba(52,211,153,0.2);color:var(--success)}
+        .topic-chip.active{border-color:var(--brand);color:var(--brand);background:rgba(167,139,250,0.06)}
+
+        .bottom-nav{
+            display:flex;justify-content:space-around;align-items:center;
+            padding:10px 8px 18px;border-top:1px solid rgba(255,255,255,0.04);
+            background:rgba(15,15,26,0.9);backdrop-filter:blur(20px);
+            z-index:100;flex-shrink:0;
+        }
+        .nav-item{
+            display:flex;flex-direction:column;align-items:center;gap:4px;
+            text-decoration:none;color:var(--text-muted);font-size:0.62rem;
+            font-weight:600;transition:all 0.2s;padding:4px 12px;border-radius:12px;
+            font-family:'JetBrains Mono',monospace;letter-spacing:0.5px;
+        }
+        .nav-item.active{color:var(--brand)}
+        .nav-item i{font-size:1.1rem}
+
+        @media (max-width: 600px) {
+            .content{grid-template-columns:1fr;padding:8px 16px 100px}
+            .hero-card{flex-direction:column;align-items:flex-start}
+            .hero-name{font-size:1.7rem}
+            .hero-actions{flex-direction:row;width:100%}
+            .hero-btn{flex:1;min-width:0;font-size:0.8rem;padding:14px 16px}
+        }
     </style>
 </head>
 <body>
-    <div class="app">
-        <!-- Login -->
-        <div class="screen active" id="loginScreen">
-            <div class="auth-card">
-                <div class="auth-logo">
-                    <h1>Rubium</h1>
-                    <p>Войди, чтобы продолжить подготовку</p>
-                </div>
-                <div class="error-msg" id="loginError"></div>
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" class="form-input" id="loginEmail" placeholder="email@example.com" value="nsdmlk@yandex.ru">
-                </div>
-                <button class="btn btn-primary" onclick="handleLogin()">Войти</button>
-            </div>
-        </div>
-
-        <!-- Dashboard -->
-        <div class="screen" id="dashboardScreen">
-            <div class="progress-bar"><div class="progress-fill" id="dashProgress"></div></div>
-            <div class="user-info">
-                <img class="user-avatar" id="dashAvatar" src="" alt="">
-                <h3 id="dashName">...</h3>
-                <p id="dashRole"></p>
-            </div>
-            <div class="stat-cards">
-                <div class="stat-card"><div class="stat-value" id="statSolved">0</div><div class="stat-label">Решено</div></div>
-                <div class="stat-card"><div class="stat-value" id="statCorrect">0</div><div class="stat-label">Верно</div></div>
-                <div class="stat-card"><div class="stat-value" id="statAccuracy">—</div><div class="stat-label">Точность</div></div>
-            </div>
-            <div class="menu-grid">
-                <div class="menu-card" onclick="startTraining()">
-                    <div class="icon">⚡</div><div class="title">Тренировка</div><div class="sub">Решать задания</div>
-                </div>
-                <div class="menu-card" onclick="showStudyMap()">
-                    <div class="icon">🗺️</div><div class="title">Карта обучения</div><div class="sub">Скоро</div>
-                </div>
-                <div class="menu-card">
-                    <div class="icon">📊</div><div class="title">Статистика</div><div class="sub">Скоро</div>
-                </div>
-                <div class="menu-card">
-                    <div class="icon">👤</div><div class="title">Профиль</div><div class="sub">Скоро</div>
-                </div>
-            </div>
-            <div style="text-align:center;margin-top:24px;">
-                <button class="btn btn-ghost" onclick="logout()">Выйти</button>
-            </div>
-        </div>
-
-        <!-- Subject -->
-        <div class="screen" id="subjectScreen">
-            <div class="auth-card">
-                <div class="auth-logo"><h1>Выбери предмет</h1></div>
-                <button class="btn btn-primary" onclick="startSession('math')" style="margin-bottom:12px;">📐 Математика</button>
-                <button class="btn btn-primary" onclick="startSession('informatics')">💻 Информатика</button>
-                <div style="text-align:center;margin-top:16px;">
-                    <button class="btn btn-ghost" onclick="showScreen('dashboardScreen')">← Назад</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Task -->
-        <div class="screen" id="taskScreen">
-            <div class="task-card" id="taskCard">
-                <div class="task-meta" id="taskMeta"></div>
-                <div class="task-text" id="taskText"></div>
-                <div id="answerSection">
-                    <input type="text" class="answer-input" id="answerInput" placeholder="Введи ответ" autocomplete="off">
-                    <button class="btn btn-primary" id="submitBtn" onclick="submitAnswer()" style="margin-top:12px;">Ответить ✨</button>
-                </div>
-                <div id="resultBlock"></div>
-                <div class="next-section" id="nextSection" style="display:none;">
-                    <button class="btn btn-primary" onclick="nextTask()">Дальше →</button>
-                    <button class="btn btn-ghost" onclick="showScreen('dashboardScreen')">На главную</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Loading -->
-        <div class="screen" id="loadingScreen"><div class="spinner"></div></div>
+<div class="app">
+    <div class="topbar">
+        <div class="brand"><span>Rub</span>ium</div>
+        <div class="user-name-top" id="userNameTop">...</div>
     </div>
 
-    <script>
-        const API = 'http://localhost:5080';
-        let currentUser = null;
-        let currentTask = null;
-        let currentSubject = null;
+    <div class="content">
+        <!-- Hero -->
+        <div class="hero-card">
+            <div class="hero-left">
+                <div class="hero-greeting">С возвращением</div>
+                <div class="hero-name"><span id="userName">...</span></div>
+                <div class="hero-stats">
+                    <div class="hero-stat"><div class="num purple" id="statSolved">0</div><div class="lbl">Решено</div></div>
+                    <div class="hero-stat"><div class="num green" id="statCorrect">0</div><div class="lbl">Верно</div></div>
+                    <div class="hero-stat"><div class="num amber" id="statAccuracy">—%</div><div class="lbl">Точность</div></div>
+                </div>
+            </div>
+            <div class="hero-actions">
+                <a href="trainer.html?mode=daily" class="hero-btn daily">
+                    <i class="fa-solid fa-calendar-check"></i> Ежедневные задания
+                </a>
+                <a href="trainer.html?mode=story" class="hero-btn story">
+                    <i class="fa-solid fa-book-open"></i> Сюжетный режим
+                </a>
+            </div>
+        </div>
 
-        // Init
-        const saved = localStorage.getItem('rubium_user');
-        if (saved) {
-            currentUser = JSON.parse(saved);
-            showScreen('dashboardScreen');
-            loadDashboard();
+        <!-- Week -->
+        <div class="glass-card">
+            <div class="card-header">
+                <span class="card-title">Неделя</span>
+                <span class="card-badge" id="streakLabel">🔥 0 дн.</span>
+            </div>
+            <div class="week-dots" id="weekDots"></div>
+        </div>
+
+        <!-- Topics -->
+        <div class="glass-card">
+            <div class="card-header">
+                <span class="card-title">Темы</span>
+            </div>
+            <div class="topics-row" id="topicsRow"></div>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <a href="dashboard.html" class="nav-item active"><i class="fa-solid fa-house"></i> Главная</a>
+        <a href="trainer.html" class="nav-item"><i class="fa-solid fa-bolt"></i> Тренировка</a>
+        <a href="stats.html" class="nav-item"><i class="fa-solid fa-chart-bar"></i> Статистика</a>
+        <a href="profile.html" class="nav-item"><i class="fa-solid fa-user"></i> Профиль</a>
+        <button onclick="logout()" style="background:none;border:none;color:var(--text-muted);font-family:'JetBrains Mono',monospace;font-size:0.62rem;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;padding:4px 12px"><i class="fa-solid fa-arrow-right-from-bracket"></i> Выйти</button>
+    </div>
+</div>
+
+<script>
+    const API = 'http://localhost:5080';
+    const DAYS = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+
+    async function init() {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) { window.location.href = 'login.html'; return; }
+        const name = user.user_metadata?.first_name || user.email?.split('@')[0] || 'ученик';
+        document.getElementById('userName').textContent = name;
+        document.getElementById('userNameTop').textContent = name;
+        loadData();
+    }
+
+    function loadData() {
+        const s = JSON.parse(localStorage.getItem('rubium_stats') || '{"solved":0,"correct":0}');
+        const streak = JSON.parse(localStorage.getItem('rubium_streak') || '{"days":0,"lastDate":""}');
+        const completedTopics = JSON.parse(localStorage.getItem('rubium_topics') || '[]');
+        const history = JSON.parse(localStorage.getItem('rubium_history') || '[]');
+
+        document.getElementById('statSolved').textContent = s.solved;
+        document.getElementById('statCorrect').textContent = s.correct;
+        document.getElementById('statAccuracy').textContent = s.solved > 0 ? Math.round((s.correct/s.solved)*100)+'%' : '—%';
+        document.getElementById('streakLabel').textContent = `🔥 ${streak.days} дн.`;
+
+        const today = new Date();
+        let weekHtml = '';
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date(today); d.setDate(d.getDate()-i);
+            const key = d.toISOString().split('T')[0];
+            const daySolved = history.filter(h => (h.date||h.timestamp?.split('T')[0]) === key).length;
+            const isToday = i === 0;
+            let cls = '';
+            if (daySolved > 0) cls = 'done';
+            else if (!isToday) cls = 'miss';
+            if (isToday) cls = 'today';
+            weekHtml += `<div class="week-dot ${cls}">${DAYS[new Date(d).getDay()===0?6:new Date(d).getDay()-1]||DAYS[6]}</div>`;
         }
+        document.getElementById('weekDots').innerHTML = weekHtml;
 
-        function showScreen(id) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-        }
+        const allTopics = [
+            {id:'arithmetic',name:'Арифметика'},{id:'equations',name:'Уравнения'},
+            {id:'geometry',name:'Геометрия'},{id:'functions',name:'Функции'},
+            {id:'probability',name:'Вероятность'},{id:'trigonometry',name:'Тригонометрия'},
+        ];
+        document.getElementById('topicsRow').innerHTML = allTopics.map(t => {
+            const done = completedTopics.includes(t.id);
+            const active = !done && (completedTopics.length === allTopics.findIndex(x=>x.id===t.id));
+            return `<a href="trainer.html?subject=math&topic=${t.id}" class="topic-chip ${done?'done':active?'active':''}">${t.name}</a>`;
+        }).join('');
+    }
 
-        // Auth
-        async function handleLogin() {
-            const email = document.getElementById('loginEmail').value.trim();
-            const errEl = document.getElementById('loginError');
-            if (!email) { errEl.textContent = 'Введи email'; errEl.style.display = 'block'; return; }
-
-            try {
-                const r = await fetch(`${API}/api/v1/auth/login`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({email, password: ''})
-                });
-                const data = await r.json();
-                if (!r.ok) { errEl.textContent = data.error; errEl.style.display = 'block'; return; }
-
-                currentUser = data;
-                localStorage.setItem('rubium_user', JSON.stringify(data));
-                errEl.style.display = 'none';
-                showScreen('dashboardScreen');
-                loadDashboard();
-            } catch (e) {
-                errEl.textContent = 'Ошибка соединения';
-                errEl.style.display = 'block';
-            }
-        }
-
-        function logout() {
-            localStorage.removeItem('rubium_user');
-            localStorage.removeItem('rubium_stats');
-            currentUser = null;
-            showScreen('loginScreen');
-        }
-
-        // Dashboard
-        function loadDashboard() {
-            if (!currentUser) return;
-            document.getElementById('dashName').textContent = currentUser.first_name || 'ученик';
-            document.getElementById('dashRole').textContent = currentUser.role === 'admin' ? 'Преподаватель' : 'Ученик';
-            document.getElementById('dashAvatar').src = currentUser.avatar_url || '';
-            updateDashStats();
-        }
-
-        function updateDashStats() {
-            const s = JSON.parse(localStorage.getItem('rubium_stats') || '{"solved":0,"correct":0}');
-            document.getElementById('statSolved').textContent = s.solved;
-            document.getElementById('statCorrect').textContent = s.correct;
-            document.getElementById('statAccuracy').textContent = s.solved > 0 ? Math.round((s.correct/s.solved)*100)+'%' : '—';
-            document.getElementById('dashProgress').style.width = s.solved > 0 ? (s.correct/s.solved)*100+'%' : '0%';
-        }
-
-        function startTraining() { showScreen('subjectScreen'); }
-        function showStudyMap() { alert('Карта обучения — в разработке 🗺️'); }
-
-        // Tasks
-        async function startSession(subject) {
-            currentSubject = subject;
-            showScreen('loadingScreen');
-            await loadTask();
-            showScreen('taskScreen');
-        }
-
-        async function loadTask() {
-            try {
-                const r = await fetch(`${API}/api/v1/tasks?subject=${currentSubject}&limit=1`);
-                const tasks = await r.json();
-                currentTask = tasks && tasks.length > 0 ? tasks[0] : null;
-            } catch (e) { currentTask = null; }
-            renderTask();
-        }
-
-        function renderTask() {
-            if (!currentTask) {
-                document.getElementById('taskText').innerHTML = '<p>Нет заданий.</p>';
-                document.getElementById('taskMeta').innerHTML = '';
-                document.getElementById('answerSection').style.display = 'none';
-                document.getElementById('resultBlock').innerHTML = '';
-                document.getElementById('nextSection').innerHTML = '<button class="btn btn-ghost" onclick="showScreen(\'subjectScreen\')">← Назад</button>';
-                document.getElementById('nextSection').style.display = 'block';
-                return;
-            }
-            document.getElementById('taskMeta').innerHTML = `
-                <span class="tag tag-subject">${currentTask.subject==='math'?'📐 Математика':'💻 Информатика'}</span>
-                <span class="tag tag-topic">${currentTask.topic||'Без темы'}</span>
-                <span class="tag tag-difficulty">${'⭐'.repeat(currentTask.difficulty||1)}</span>`;
-            document.getElementById('taskText').innerHTML = currentTask.text
-                .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
-                .replace(/\*(.*?)\*/g,'<em>$1</em>')
-                .replace(/!\[.*?\]\((.*?)\)/g,'<img src="$1" style="max-width:100%;border-radius:12px;margin:12px 0;">')
-                .replace(/\n/g,'<br>');
-            document.getElementById('answerInput').value = '';
-            document.getElementById('answerInput').className = 'answer-input';
-            document.getElementById('answerSection').style.display = 'block';
-            document.getElementById('submitBtn').disabled = false;
-            document.getElementById('resultBlock').innerHTML = '';
-            document.getElementById('nextSection').style.display = 'none';
-            document.getElementById('answerInput').focus();
-        }
-
-        async function submitAnswer() {
-            const answer = document.getElementById('answerInput').value.trim();
-            if (!answer) return;
-            document.getElementById('submitBtn').disabled = true;
-            try {
-                const r = await fetch(`${API}/api/v1/check`, {
-                    method:'POST',
-                    headers:{'Content-Type':'application/json'},
-                    body:JSON.stringify({task_id:currentTask.id, answer})
-                });
-                const result = await r.json();
-                const s = JSON.parse(localStorage.getItem('rubium_stats')||'{"solved":0,"correct":0}');
-                s.solved++; if(result.correct) s.correct++;
-                localStorage.setItem('rubium_stats', JSON.stringify(s));
-                showResult(result);
-            } catch(e) { document.getElementById('submitBtn').disabled = false; }
-        }
-
-        function showResult(result) {
-            const input = document.getElementById('answerInput');
-            const rb = document.getElementById('resultBlock');
-            const ns = document.getElementById('nextSection');
-            const card = document.getElementById('taskCard');
-            if(result.correct) {
-                input.className='answer-input correct';
-                rb.innerHTML=`<div class="result-block correct bounce"><div class="result-icon">🎉</div><div class="result-title">Правильно!</div><div class="result-text">${result.explanation||'Отлично!'}</div></div>`;
-            } else {
-                input.className='answer-input incorrect';
-                card.classList.add('shake'); setTimeout(()=>card.classList.remove('shake'),400);
-                rb.innerHTML=`<div class="result-block incorrect"><div class="result-icon">🤔</div><div class="result-title">Не совсем</div><div class="result-text">Ответ: <strong>${result.correct_answer}</strong><br>${result.explanation||''}</div></div>`;
-            }
-            document.getElementById('answerSection').style.display='none';
-            ns.style.display='flex';
-        }
-
-        function nextTask() {
-            showScreen('loadingScreen');
-            loadTask().then(()=>showScreen('taskScreen'));
-        }
-
-        document.addEventListener('keydown', function(e) {
-            if(e.key==='Enter' && document.getElementById('loginScreen').classList.contains('active')) handleLogin();
-            if(e.key==='Enter' && document.getElementById('taskScreen').classList.contains('active')) {
-                const sb = document.getElementById('submitBtn');
-                if(!sb.disabled) submitAnswer();
-                else if(document.getElementById('nextSection').style.display!=='none') nextTask();
-            }
-        });
-    </script>
+    async function logout() {
+        ['rubium_stats','rubium_history','rubium_streak','rubium_topic_stats','rubium_topics'].forEach(k=>localStorage.removeItem(k));
+        await supabase.auth.signOut();
+        window.location.href='login.html';
+    }
+    init();
+</script>
 </body>
 </html>

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rubium — Вход</title>
-    <link rel="icon" type="image/png" href="data/logo.png">
+    <link rel="icon" type="image/png" href="ex_prac/assets/images/logo.png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Unbounded:wght@600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -128,7 +128,7 @@
                 return;
             }
             if (!data.user) { showError('Ошибка входа'); return; }
-            window.location.href = 'dashboard.html';
+            window.location.href = 'index.html';
         });
 
         async function loginWithOAuth(provider) {
