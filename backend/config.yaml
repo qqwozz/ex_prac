@@ -1,0 +1,16 @@
+# config.yaml
+supabase:
+  url: "https://nrmihghshpteellhmzuh.supabase.co"
+  anon_key: "${SUPABASE_ANON_KEY}"
+  service_key: "${SUPABASE_SERVICE_KEY}"
+
+deepseek:
+  api_key: "${DEEPSEEK_API_KEY}"
+  api_url: "https://api.deepseek.com/v1/chat/completions"
+
+openai:
+  api_key: "${OPENAI_API_KEY}"
+
+server:
+  go_port: 8080
+  python_port: 5080
