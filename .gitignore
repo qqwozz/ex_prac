@@ -8,11 +8,30 @@ Thumbs.db
 *.swp
 *.swo
 
-# Environment
+# Environment / secrets
 .env
 .env.local
-model/
+.env.*
+!.env.example
 
-# Build artifacts
-*.exe
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+venv/
+.venv/
+
+# Go
+api/server
+api/server.exe
+api/server_test.exe
 api/*.txt
+
+# Node
+node_modules/
+
+# Config with secrets
+config.yaml

@@ -37,7 +37,7 @@ func resolveEnv(value string) string {
 }
 
 func Load() *Config {
-	if err := godotenv.Load(); err != nil {
+	if err := godotenv.Load("../.env"); err != nil {
 		log.Println("Warning: .env file not found, using environment variables")
 	}
 

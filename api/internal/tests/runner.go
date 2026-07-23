@@ -44,7 +44,7 @@ func RunAll() {
 	fmt.Printf("%s└─────────────────────────────────────┘%s\n", colorCyan, colorReset)
 	fmt.Println()
 
-	if err := godotenv.Load(".env"); err != nil {
+	if err := godotenv.Load("../.env"); err != nil {
 		fmt.Printf("%s  ✗ .env не найден%s\n\n", colorRed, colorReset)
 		os.Exit(1)
 	}
