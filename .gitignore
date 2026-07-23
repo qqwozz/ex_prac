@@ -12,3 +12,7 @@ Thumbs.db
 .env
 .env.local
 model/
+
+# Build artifacts
+*.exe
+api/*.txt
