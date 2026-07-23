@@ -53,7 +53,7 @@
 | Метод | Путь | Что делает |
 |-------|------|------------|
 | `GET` | `/api/v1/tasks` | Получить задание (с фильтрами) |
-| `POST` | `/api/v1/check` | Проверить ответ |
+| `POST` | `/api/v1/check` | Проверить ответ (Go или Python) |
 | `GET` | `/api/v1/stats` | Статистика пользователя |
 | `GET` | `/api/v1/user/{id}` | Данные пользователя (подписка) |
 | `POST` | `/api/v1/tasks` | Добавить задание (форма/файл) |
@@ -68,12 +68,16 @@
 
 ### Форматы заданий (проверка)
 
-| Тип | Как проверяет |
-|-----|---------------|
-| Выбор ответа | Точное сравнение строки |
-| Ввод числа | Сравнение с допуском (±0.01) |
-| Ввод строки | Нормализация (нижний регистр, пробелы) + сравнение |
-| Множественный выбор | Совпадение множества |
+| Тип | Кто проверяет | Как проверяет |
+|-----|---------------|---------------|
+| Выбор ответа (`choice`) | Go | Точное сравнение строки |
+| Ввод числа (`number`) | Go | Сравнение с допуском (±0.01) |
+| Ввод строки (`string`) | Go | Нормализация (нижний регистр, пробелы) + сравнение |
+| Множественный выбор (`multi`) | Go | Совпадение множества |
+| Написание кода (`code`) | Python | Запуск кода + сравнение вывода |
+| Текстовый ответ (`text`) | Python | AI-анализ или эталонное сравнение |
+
+**Логика:** Go проверяет простые типы мгновенно. Сложные типы (code, text) пересылаются POST-запросом на Python-сервер (`PYTHON_URL/ai/v1/check`).
 
 ### Адаптивное обучение
 
@@ -165,53 +169,7 @@
 
 ## База данных (Supabase)
 
-### Таблица tasks
-
-```sql
-CREATE TABLE tasks (
-    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    subject     TEXT NOT NULL,           -- math, informatics
-    exam        TEXT NOT NULL,           -- ege, oge
-    type        TEXT NOT NULL,           -- choice, number, string, multi
-    number      INTEGER,                 -- номер задания в экзамене
-    difficulty  INTEGER NOT NULL CHECK (difficulty BETWEEN 1 AND 5),
-    topic       TEXT NOT NULL,           -- модуль (геометрия, уравнения)
-    text        TEXT NOT NULL,           -- условие задания
-    options     JSONB,                   -- варианты ответа (для choice)
-    answer      TEXT NOT NULL,           -- правильный ответ
-    explanation TEXT,                    -- разбор
-    image_url   TEXT,                    -- пока не используется
-    source      TEXT DEFAULT 'ai',      -- 'ai', 'teacher', 'fipi'
-    expires_at  TIMESTAMPTZ,            -- время жизни (nullable)
-    created_at  TIMESTAMPTZ DEFAULT NOW()
-);
-```
-
-### Таблица attempts
-
-```sql
-CREATE TABLE attempts (
-    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id     UUID NOT NULL,
-    task_id     UUID NOT NULL REFERENCES tasks(id),
-    answer      TEXT NOT NULL,
-    correct     BOOLEAN NOT NULL,
-    created_at  TIMESTAMPTZ DEFAULT NOW()
-);
-```
-
-### Таблица users
-
-```sql
-CREATE TABLE users (
-    id                  UUID PRIMARY KEY,
-    subscription_type   TEXT NOT NULL DEFAULT 'basic',  -- 'basic' / 'plus'
-    referred_by         UUID,
-    hints_used_today    INTEGER DEFAULT 0,
-    hints_reset_at      TIMESTAMPTZ,
-    created_at          TIMESTAMPTZ DEFAULT NOW()
-);
-```
+Подробная документация по схеме БД: [DB.md](DB.md)
 
 ---
 
