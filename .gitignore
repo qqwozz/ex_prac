@@ -34,4 +34,4 @@ api/*.txt
 node_modules/
 
 # Config with secrets
-config.yaml
+# config.yaml
