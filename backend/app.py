@@ -1,10 +1,19 @@
 # app.py
 from flask import Flask
 from flask_cors import CORS
-from routes.tasks import tasks_bp
-import requests
-from init import SUPABASE_URL, supabase_headers, DEEPSEEK_API_URL, DEEPSEEK_API_KEY
+from routes.proxy import proxy_bp
+from init import PYTHON_PORT, SUPABASE_URL, GO_PORT
 from time import sleep
+
+COLORS = {
+    "GREEN": "\033[32m",
+    "YELLOW": "\033[33m",
+    "RED": "\033[31m",
+    "CYAN": "\033[36m",
+    "GRAY": "\033[90m",
+    "BOLD": "\033[1m",
+    "RESET": "\033[0m",
+}
 
 app = Flask(__name__)
 CORS(app, origins=[
@@ -15,17 +24,15 @@ CORS(app, origins=[
     "http://localhost:5000",
 ])
 
-app.register_blueprint(tasks_bp)
+app.register_blueprint(proxy_bp)
 
 if __name__ == "__main__":
-    print("Supabase:", requests.get(
-        f"{SUPABASE_URL}/rest/v1/users?limit=1",
-        headers=supabase_headers()
-    ).status_code)
-
-    headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY}"}
-    print("DeepSeek:", requests.get("https://api.deepseek.com/v1/models", headers=headers).status_code)
-
-    print("\nStarting server...")
-    app.run(debug=True, port=5080)
-    
+    print(f"\n{COLORS['BOLD']}{COLORS['CYAN']}╔══════════════════════════════════════╗{COLORS['RESET']}")
+    print(f"{COLORS['BOLD']}{COLORS['CYAN']}║{COLORS['RESET']}   {COLORS['BOLD']}Rubium Python Server{COLORS['RESET']}              {COLORS['BOLD']}{COLORS['CYAN']} ║{COLORS['RESET']}")
+    print(f"{COLORS['BOLD']}{COLORS['CYAN']}╚══════════════════════════════════════╝{COLORS['RESET']}")
+    print(f"\n  {COLORS['GRAY']}Proxy:{COLORS['RESET']} :{PYTHON_PORT} → Go : {GO_PORT} → Supabase")
+    print(f"  {COLORS['GRAY']}AI:{COLORS['RESET']}    : {PYTHON_PORT} → DeepSeek")
+    print(f"  {COLORS['GRAY']}CORS:{COLORS['RESET']}  localhost: 5500, 5501, 5000")
+    print(f"\n  {COLORS['YELLOW']}Starting server...{COLORS['RESET']}\n")
+    sleep(1)
+    app.run(debug=False, port=PYTHON_PORT)
