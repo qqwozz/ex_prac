@@ -33,6 +33,7 @@ func main() {
 	tasks := handlers.NewTasksHandler(client)
 	check := handlers.NewCheckHandler(client)
 	r.GET("/api/v1/tasks", tasks.GetTasks)
+	r.GET("/api/v1/tasks/:id", tasks.GetTaskByID)
 	r.POST("/api/v1/check", check.Check)
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
@@ -154,6 +155,7 @@ func printBanner(port string) {
 	fmt.Printf("  \033[32m│  http://localhost:%s               │\033[0m\n", port)
 	fmt.Printf("  \033[32m│                                     │\033[0m\n")
 	fmt.Printf("  \033[32m│  GET  /api/v1/tasks                 │\033[0m\n")
+	fmt.Printf("  \033[32m│  GET  /api/v1/tasks/:id            │\033[0m\n")
 	fmt.Printf("  \033[32m│  POST /api/v1/check                 │\033[0m\n")
 	fmt.Printf("  \033[32m│  GET  /health                       │\033[0m\n")
 	fmt.Printf("  \033[32m└─────────────────────────────────────┘\033[0m\n")

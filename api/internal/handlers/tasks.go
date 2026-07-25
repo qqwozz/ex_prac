@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -12,6 +13,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
+
+var uuidRe = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`)
+
+func isValidUUID(s string) bool {
+	return uuidRe.MatchString(s)
+}
 
 type TasksHandler struct {
 	client *supabase.Client
@@ -79,4 +86,26 @@ func (h *TasksHandler) GetTasks(c *gin.Context) {
 		"tasks": tasks,
 		"count": len(tasks),
 	})
+}
+
+// GetTaskByID — GET /api/v1/tasks/:id
+func (h *TasksHandler) GetTaskByID(c *gin.Context) {
+	id := c.Param("id")
+	if !isValidUUID(id) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "невалидный UUID"})
+		return
+	}
+
+	var tasks []map[string]interface{}
+	endpoint := fmt.Sprintf("tasks?select=*&id=eq.%s&limit=1", id)
+	if err := h.client.Query(endpoint, false, &tasks); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	if len(tasks) == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "задание не найдено"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"task": tasks[0]})
 }

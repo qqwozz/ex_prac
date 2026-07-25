@@ -53,6 +53,11 @@ func (h *CheckHandler) Check(c *gin.Context) {
 		return
 	}
 
+	if !isValidUUID(req.TaskID) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "невалидный task_id"})
+		return
+	}
+
 	task, err := h.getTask(req.TaskID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "задание не найдено"})
