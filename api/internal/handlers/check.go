@@ -60,7 +60,11 @@ func (h *CheckHandler) Check(c *gin.Context) {
 
 	task, err := h.getTask(req.TaskID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "задание не найдено"})
+		if errors.Is(err, ErrTaskNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "задание не найдено"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "ошибка базы данных"})
+		}
 		return
 	}
 
@@ -89,10 +93,14 @@ func (h *CheckHandler) Check(c *gin.Context) {
 
 	explanation := getStringField(task, "solution")
 
+	shortID := req.TaskID
+	if len(shortID) > 8 {
+		shortID = shortID[:8]
+	}
 	if result.Correct {
-		fmt.Printf("  \033[1;32m  ✓ task=%s correct\033[0m\n", req.TaskID[:8])
+		fmt.Printf("  \033[1;32m  ✓ task=%s correct\033[0m\n", shortID)
 	} else {
-		fmt.Printf("  \033[1;31m  ✗ task=%s wrong → %s\033[0m\n", req.TaskID[:8], result.CorrectAnswer)
+		fmt.Printf("  \033[1;31m  ✗ task=%s wrong → %s\033[0m\n", shortID, result.CorrectAnswer)
 	}
 
 	c.JSON(http.StatusOK, CheckResponse{

@@ -182,3 +182,31 @@ func (h *TasksHandler) UpdateTask(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "задание обновлено"})
 }
+
+// DeleteTask — DELETE /api/v1/tasks/:id
+func (h *TasksHandler) DeleteTask(c *gin.Context) {
+	id := c.Param("id")
+	if !isValidUUID(id) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "невалидный UUID"})
+		return
+	}
+
+	var tasks []map[string]interface{}
+	checkEndpoint := fmt.Sprintf("tasks?select=id&id=eq.%s&limit=1", id)
+	if err := h.client.Query(checkEndpoint, false, &tasks); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ошибка базы данных"})
+		return
+	}
+	if len(tasks) == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "задание не найдено"})
+		return
+	}
+
+	endpoint := fmt.Sprintf("tasks?id=eq.%s", id)
+	if err := h.client.Delete(endpoint, true); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "задание удалено"})
+}

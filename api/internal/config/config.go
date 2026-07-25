@@ -77,6 +77,9 @@ func Load() *Config {
 	if cfg.SupabaseAnonKey == "" {
 		log.Fatal("supabase.anon_key is required in config.yaml")
 	}
+	if cfg.SupabaseServiceKey == "" {
+		log.Fatal("supabase.service_key is required in config.yaml (needed for write operations)")
+	}
 
 	return cfg
 }

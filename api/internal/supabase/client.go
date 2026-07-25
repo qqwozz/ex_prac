@@ -123,3 +123,35 @@ func (c *Client) Patch(endpoint string, useServiceRole bool, payload interface{}
 
 	return nil
 }
+
+// Delete — DELETE-запрос к PostgREST (удаление записей)
+func (c *Client) Delete(endpoint string, useServiceRole bool) error {
+	url := fmt.Sprintf("%s/rest/v1/%s", c.baseURL, endpoint)
+
+	req, err := http.NewRequest("DELETE", url, nil)
+	if err != nil {
+		return fmt.Errorf("creating request: %w", err)
+	}
+
+	h := c.headers()
+	if useServiceRole {
+		h = c.headersService()
+	}
+	h["Prefer"] = "return=minimal"
+	for k, v := range h {
+		req.Header.Set(k, v)
+	}
+
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return fmt.Errorf("executing request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("supabase returned %d: %s", resp.StatusCode, string(body))
+	}
+
+	return nil
+}
