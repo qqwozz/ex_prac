@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"api/internal/config"
@@ -22,16 +25,29 @@ func main() {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
 	r.Use(gin.Recovery())
+	r.Use(corsMiddleware())
 	r.Use(requestLogger())
 
 	tasks := handlers.NewTasksHandler(client)
 	check := handlers.NewCheckHandler(client)
 	r.GET("/api/v1/tasks", tasks.GetTasks)
 	r.POST("/api/v1/check", check.Check)
+	r.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"status": "ok"})
+	})
 
 	printBanner(cfg.Port)
 
-	if err := r.Run(":" + cfg.Port); err != nil {
+	srv := &http.Server{
+		Addr:              ":" + cfg.Port,
+		Handler:           r,
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       30 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       120 * time.Second,
+	}
+
+	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatal(err)
 	}
 }
@@ -120,6 +136,35 @@ func printBanner(port string) {
 	fmt.Printf("  \033[32m│                                     │\033[0m\n")
 	fmt.Printf("  \033[32m│  GET  /api/v1/tasks                 │\033[0m\n")
 	fmt.Printf("  \033[32m│  POST /api/v1/check                 │\033[0m\n")
+	fmt.Printf("  \033[32m│  GET  /health                       │\033[0m\n")
 	fmt.Printf("  \033[32m└─────────────────────────────────────┘\033[0m\n")
 	fmt.Println()
+}
+
+func corsMiddleware() gin.HandlerFunc {
+	origins := map[string]bool{
+		"http://localhost:5500":  true,
+		"http://localhost:5080":  true,
+		"http://localhost:5081":  true,
+		"http://localhost:3000":  true,
+		"http://127.0.0.1:5500": true,
+		"http://127.0.0.1:5080": true,
+	}
+
+	return func(c *gin.Context) {
+		origin := c.Request.Header.Get("Origin")
+		if origins[origin] {
+			c.Header("Access-Control-Allow-Origin", origin)
+			c.Header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+			c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			c.Header("Access-Control-Max-Age", "86400")
+		}
+
+		if c.Request.Method == http.MethodOptions {
+			c.AbortWithStatus(http.StatusNoContent)
+			return
+		}
+
+		c.Next()
+	}
 }

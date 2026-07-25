@@ -277,13 +277,14 @@ func sectionEndpoints(url, anonKey string) section {
 	if len(mathTasks) > 0 {
 		taskID := mathTasks[0]["id"].(string)
 		var checkTask []map[string]interface{}
-		err := client.Query("tasks?select=answer&id=eq."+taskID, false, &checkTask)
+		err := client.Query("tasks?select=answer,task_type&id=eq."+taskID, false, &checkTask)
 		if err == nil && len(checkTask) > 0 {
 			answer := checkTask[0]["answer"].(string)
-			r := checker.Check("fipi", answer, answer)
+			taskType := checkTask[0]["task_type"].(string)
+			r := checker.Check(taskType, answer, answer)
 			s.subtests = append(s.subtests, subtest{
 				name: "Check: задание из БД",
-				pass: r.Correct,
+				pass: r.Correct || r.NeedsPython,
 				err:  "ответ не совпал",
 			})
 		}

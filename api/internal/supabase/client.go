@@ -35,13 +35,9 @@ func (c *Client) headers() map[string]string {
 }
 
 func (c *Client) headersService() map[string]string {
-	key := c.anonKey
-	if c.serviceKey != "" {
-		key = c.serviceKey
-	}
 	return map[string]string{
-		"apikey":       key,
-		"Authorization": "Bearer " + key,
+		"apikey":       c.serviceKey,
+		"Authorization": "Bearer " + c.serviceKey,
 		"Content-Type":  "application/json",
 	}
 }

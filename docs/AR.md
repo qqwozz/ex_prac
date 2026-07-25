@@ -25,11 +25,11 @@
 │   GO (8080)      │      │   PYTHON (5080)              │
 │   Backend API    │      │   AI + Frontend              │
 │                  │      │                              │
-│ • tasks          │      │ • раздача статики (HTML/CSS/JS)│
-│ • check          │      │ • AI-подсказки               │
-│ • stats          │      │ • генерация заданий          │
-│ • user           │      │ • проксирование → Go         │
-│ • adaptive       │      │                              │
+│ • GET /api/v1/tasks│    │ • раздача статики (HTML/CSS/JS)│
+│ • POST /api/v1/check│   │ • AI-подсказки               │
+│ • GET /health     │     │ • генерация заданий          │
+│ • CORS middleware │     │ • проксирование → Go         │
+│ • Checker (6 типов)│    │                              │
 └──────┬───────────┘      └──────────┬───────────────────┘
        │                             │
        │                             │
@@ -153,44 +153,39 @@
 ## Внутренняя архитектура Go
 
 ```
-exam-trainer-backend/
+api/
 ├── cmd/
 │   └── server/
-│       └── main.go              # точка входа, запуск gin
+│       └── main.go              # точка входа, CORS, health-check, сервер
 ├── internal/
-│   ├── api/
-│   │   ├── router.go            # маршруты (gin.Router)
-│   │   ├── handlers.go          # обработчики запросов
-│   │   └── middleware.go        # логирование, CORS
-│   ├── models/
-│   │   ├── task.go              # Task, Answer
-│   │   ├── stats.go             # Stats
-│   │   └── user.go              # User
-│   ├── storage/
-│   │   ├── supabase.go          # клиент Supabase (HTTP)
-│   │   ├── tasks.go             # запросы к tasks
-│   │   ├── attempts.go          # запросы к attempts
-│   │   └── users.go             # запросы к users
+│   ├── config/
+│   │   └── config.go            # загрузка config.yaml + .env
+│   ├── handlers/
+│   │   ├── tasks.go             # GET /api/v1/tasks
+│   │   ├── check.go             # POST /api/v1/check
+│   │   ├── tasks_test.go        # интеграционные тесты tasks
+│   │   └── check_test.go        # интеграционные тесты check
 │   ├── checker/
-│   │   └── checker.go           # логика проверки ответов
-│   └── adaptive/
-│       └── adaptive.go          # адаптивная логика
-├── migrations/
-│   └── 001_init.sql             # создание таблиц
+│   │   ├── checker.go           # логика проверки ответов (6 типов)
+│   │   └── checker_test.go      # unit-тесты чекера (30+ кейсов)
+│   ├── supabase/
+│   │   └── client.go            # HTTP-клиент для Supabase REST API
+│   └── tests/
+│       └── runner.go            # стартовые проверки (конфиг, БД, checker)
 ├── go.mod
-└── README.md
+└── go.sum
 ```
 
 ### Ключевые файлы
 
 | Файл | Что делает |
 |------|------------|
-| `main.go` | Запуск сервера, конфигурация |
-| `router.go` | Маршруты: `/api/v1/tasks`, `/api/v1/check`, `/api/v1/stats` |
-| `handlers.go` | Обработка HTTP-запросов, вызов storage/checker |
-| `checker.go` | Сравнение ответов (choice, number, string, multi) |
-| `adaptive.go` | Подбор уровня сложности по статистике |
-| `supabase.go` | HTTP-клиент для Supabase REST API |
+| `main.go` | Запуск сервера, CORS, health-check, request logger |
+| `handlers/tasks.go` | GET /api/v1/tasks — фильтры, лимит (max 100), рандомизация |
+| `handlers/check.go` | POST /api/v1/check — проверка ответа, пересылка в Python для code/text |
+| `checker/checker.go` | Сравнение ответов: choice, number, string, multi, code, text |
+| `supabase/client.go` | HTTP-клиент для PostgREST (anon + service key) |
+| `tests/runner.go` | Автотесты при старте — сервер не запускается при ошибке |
 
 ---
 
@@ -261,14 +256,19 @@ static/
 
 ## API-контракты
 
+### Go API (актуальные эндпоинты)
+
+| Метод | Путь | Описание |
+|-------|------|----------|
+| `GET` | `/health` | Health-check |
+| `GET` | `/api/v1/tasks` | Получить задания (фильтры, лимит max=100) |
+| `POST` | `/api/v1/check` | Проверить ответ |
+
 ### Go → Supabase
 
 | Запрос | Метод | Путь Supabase |
 |--------|-------|---------------|
 | Задания | `GET` | `/rest/v1/tasks?subject=eq.{s}&topic=eq.{t}&difficulty=lte.{d}&limit={n}` |
-| Проверка | `POST` | `/rest/v1/attempts` |
-| Статистика | `GET` | `/rest/v1/attempts?user_id=eq.{id}&select=*` |
-| Пользователь | `GET` | `/rest/v1/users?id=eq.{id}` |
 
 ### Python → Go
 
@@ -276,8 +276,6 @@ static/
 |--------|-------|---------|
 | Задания | `GET` | `http://localhost:8080/api/v1/tasks?...` |
 | Проверка | `POST` | `http://localhost:8080/api/v1/check` |
-| Статистика | `GET` | `http://localhost:8080/api/v1/stats?...` |
-| Пользователь | `GET` | `http://localhost:8080/api/v1/user/{id}` |
 
 ### Python → AI
 
@@ -354,11 +352,15 @@ exam-trainer-ai/
 
 | Мера | Реализация |
 |------|------------|
-| Go не доступен снаружи | Только Python (5080) публичный |
+| CORS | Whitelist origins (localhost:5500, 5080, 5081, 3000) |
 | Лимит подсказок | `hints_used_today` в users, сброс каждые 24ч |
 | Валидация ответов | Checker проверяет тип и формат |
 | SQL-инъекции | Нет (Supabase REST API, не SQL) |
 | XSS | Escape на фронте, Content-Security-Policy |
+| Таймауты | ReadHeader: 10s, Read/Write: 30s, Idle: 120s |
+| Python-запрос | Таймаут 15s, лимит ответа 1MB |
+| Max limit | `limit` ограничен до 100 |
+| Стартовые проверки | Сервер не запускается при ошибке конфига/БД |
 
 ---
 

@@ -50,6 +50,10 @@ func (h *TasksHandler) GetTasks(c *gin.Context) {
 			limit = parsed
 		}
 	}
+	const maxLimit = 100
+	if limit > maxLimit {
+		limit = maxLimit
+	}
 
 	endpoint := "tasks?select=*"
 	if len(filters) > 0 {

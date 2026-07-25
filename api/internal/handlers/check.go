@@ -3,16 +3,20 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"time"
 
 	"api/internal/checker"
 	"api/internal/supabase"
 
 	"github.com/gin-gonic/gin"
 )
+
+var ErrTaskNotFound = errors.New("задание не найдено")
 
 type CheckHandler struct {
 	client    *supabase.Client
@@ -95,13 +99,13 @@ func (h *CheckHandler) Check(c *gin.Context) {
 
 func (h *CheckHandler) getTask(taskID string) (map[string]interface{}, error) {
 	var tasks []map[string]interface{}
-	endpoint := "tasks?select=*&id=eq." + taskID + "&limit=1"
+	endpoint := fmt.Sprintf("tasks?select=*&id=eq.%s&limit=1", taskID)
 	err := h.client.Query(endpoint, false, &tasks)
 	if err != nil {
 		return nil, err
 	}
 	if len(tasks) == 0 {
-		return nil, io.ErrUnexpectedEOF
+		return nil, ErrTaskNotFound
 	}
 	return tasks[0], nil
 }
@@ -120,17 +124,27 @@ func (h *CheckHandler) checkViaPython(task map[string]interface{}, userAnswer st
 		return nil, err
 	}
 
-	resp, err := http.Post(h.pythonURL+"/ai/v1/check", "application/json", bytes.NewBuffer(body))
+	client := &http.Client{Timeout: 15 * time.Second}
+	resp, err := client.Post(h.pythonURL+"/ai/v1/check", "application/json", bytes.NewBuffer(body))
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
+	respBody, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
+	if err != nil {
+		return nil, fmt.Errorf("чтение ответа Python: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("Python вернул %d: %s", resp.StatusCode, string(respBody))
+	}
+
 	var pyResult struct {
 		Correct bool `json:"correct"`
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&pyResult); err != nil {
-		return nil, err
+	if err := json.Unmarshal(respBody, &pyResult); err != nil {
+		return nil, fmt.Errorf("парсинг ответа Python: %w", err)
 	}
 
 	return &checker.Result{
