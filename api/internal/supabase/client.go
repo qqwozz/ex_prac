@@ -1,6 +1,7 @@
 package supabase
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -84,4 +85,41 @@ func (c *Client) Query(endpoint string, useServiceRole bool, result interface{})
 		return err
 	}
 	return json.Unmarshal(body, result)
+}
+
+// Patch — PATCH-запрос к PostgREST (обновление записей)
+func (c *Client) Patch(endpoint string, useServiceRole bool, payload interface{}) error {
+	url := fmt.Sprintf("%s/rest/v1/%s", c.baseURL, endpoint)
+
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("marshaling payload: %w", err)
+	}
+
+	req, err := http.NewRequest("PATCH", url, bytes.NewBuffer(data))
+	if err != nil {
+		return fmt.Errorf("creating request: %w", err)
+	}
+
+	h := c.headers()
+	if useServiceRole {
+		h = c.headersService()
+	}
+	h["Prefer"] = "return=minimal"
+	for k, v := range h {
+		req.Header.Set(k, v)
+	}
+
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return fmt.Errorf("executing request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("supabase returned %d: %s", resp.StatusCode, string(body))
+	}
+
+	return nil
 }

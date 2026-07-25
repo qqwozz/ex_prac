@@ -109,3 +109,76 @@ func (h *TasksHandler) GetTaskByID(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"task": tasks[0]})
 }
+
+type UpdateTaskRequest struct {
+	Content    *string `json:"content"`
+	Answer     *string `json:"answer"`
+	Solution   *string `json:"solution"`
+	Subject    *string `json:"subject"`
+	ExamType   *string `json:"exam_type"`
+	Level      *string `json:"level"`
+	Topic      *string `json:"topic"`
+	TaskType   *string `json:"task_type"`
+	TaskNumber *int    `json:"task_number"`
+	Source     *string `json:"source"`
+}
+
+// UpdateTask — PUT /api/v1/tasks/:id
+func (h *TasksHandler) UpdateTask(c *gin.Context) {
+	id := c.Param("id")
+	if !isValidUUID(id) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "невалидный UUID"})
+		return
+	}
+
+	var req UpdateTaskRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "невалидный JSON"})
+		return
+	}
+
+	updates := map[string]interface{}{}
+	if req.Content != nil {
+		updates["content"] = *req.Content
+	}
+	if req.Answer != nil {
+		updates["answer"] = *req.Answer
+	}
+	if req.Solution != nil {
+		updates["solution"] = *req.Solution
+	}
+	if req.Subject != nil {
+		updates["subject"] = *req.Subject
+	}
+	if req.ExamType != nil {
+		updates["exam_type"] = *req.ExamType
+	}
+	if req.Level != nil {
+		updates["level"] = *req.Level
+	}
+	if req.Topic != nil {
+		updates["topic"] = *req.Topic
+	}
+	if req.TaskType != nil {
+		updates["task_type"] = *req.TaskType
+	}
+	if req.TaskNumber != nil {
+		updates["task_number"] = *req.TaskNumber
+	}
+	if req.Source != nil {
+		updates["source"] = *req.Source
+	}
+
+	if len(updates) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "нет полей для обновления"})
+		return
+	}
+
+	endpoint := fmt.Sprintf("tasks?id=eq.%s", id)
+	if err := h.client.Patch(endpoint, true, updates); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "задание обновлено"})
+}
