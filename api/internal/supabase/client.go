@@ -48,7 +48,7 @@ func (c *Client) headersService() map[string]string {
 	}
 }
 
-// do — выполнение запроса с retry на сетевые ошибки и 5xx
+// do — выполнение запроса с retry на сетевые ошибки и 5 раз
 func (c *Client) do(req *http.Request) (*http.Response, error) {
 	var lastErr error
 
