@@ -13,12 +13,16 @@
 | Версия API | v1 |
 | Кодировка | UTF-8 |
 
-### Rate Limiting
+### Ограничения
 
 | Параметр | Значение |
 |----------|----------|
 | Максимум заданий за запрос | 100 (`limit` capped) |
+| Максимальный размер тела | 1 MB |
 | Таймаут подключения | 10s (read header), 30s (read/write), 120s (idle) |
+| Retry на Supabase | Макс. 2 ретрая, exponential backoff (200ms → 400ms → 800ms) |
+| Retry на 5xx | Да (сетевые ошибки + серверные ошибки Supabase) |
+| Retry на 4xx | Нет |
 
 ### CORS
 
@@ -30,6 +34,8 @@
 - `http://localhost:3000`
 - `http://127.0.0.1:5500`
 - `http://127.0.0.1:5080`
+
+Разрешённые методы: `GET`, `POST`, `PUT`, `OPTIONS`
 
 ---
 
@@ -129,6 +135,128 @@ curl "http://localhost:8080/api/v1/tasks?subject=informatics&topic=Програ�
 
 ---
 
+### GET /api/v1/tasks/:id
+
+Получить одно задание по UUID.
+
+**Параметры (path):**
+
+| Параметр | Тип | Описание |
+|----------|-----|----------|
+| `id` | UUID | Уникальный идентификатор задания |
+
+**Ответ (200):**
+
+```json
+{
+  "task": {
+    "id": "83b25796-49c5-4159-ae46-9e1196719288",
+    "content": "Напишите программу...",
+    "answer": "-",
+    "subject": "informatics",
+    "exam_type": "oge",
+    "level": "medium",
+    "topic": "Программирование",
+    "task_type": "fipi",
+    "task_number": 16,
+    "source": "Открытый банк ФИПИ",
+    "display_id": "#000002"
+  }
+}
+```
+
+**Пример:**
+
+```bash
+curl "http://localhost:8080/api/v1/tasks/83b25796-49c5-4159-ae46-9e1196719288"
+```
+
+---
+
+### PUT /api/v1/tasks/:id
+
+Обновить задание по UUID. Обновляются только переданные поля (частичное обновление).
+
+**Параметры (path):**
+
+| Параметр | Тип | Описание |
+|----------|-----|----------|
+| `id` | UUID | Уникальный идентификатор задания |
+
+**Тело запроса (все поля опциональны):**
+
+```json
+{
+  "content": "Новое условие задания",
+  "answer": "42",
+  "solution": "Разбор решения",
+  "subject": "math",
+  "exam_type": "ege",
+  "level": "hard",
+  "topic": "Алгебра",
+  "task_type": "ai",
+  "task_number": 5,
+  "source": "ai"
+}
+```
+
+| Поле | Тип | Описание |
+|------|-----|----------|
+| `content` | string | Условие задания |
+| `answer` | string | Правильный ответ |
+| `solution` | string | Разбор решения |
+| `subject` | string | Предмет: `math`, `informatics` |
+| `exam_type` | string | Тип экзамена: `ege`, `oge` |
+| `level` | string | Уровень: `base`, `medium`, `hard` |
+| `topic` | string | Тема/модуль |
+| `task_type` | string | Тип: `fipi`, `ai` |
+| `task_number` | integer | Номер задания |
+| `source` | string | Источник |
+
+**Ответ (200):**
+
+```json
+{
+  "message": "задание обновлено"
+}
+```
+
+**Пример:**
+
+```bash
+curl -X PUT "http://localhost:8080/api/v1/tasks/83b25796-49c5-4159-ae46-9e1196719288" \
+  -H "Content-Type: application/json" \
+  -d '{"answer": "42", "level": "hard"}'
+```
+
+---
+
+### DELETE /api/v1/tasks/:id
+
+Удалить задание по UUID.
+
+**Параметры (path):**
+
+| Параметр | Тип | Описание |
+|----------|-----|----------|
+| `id` | UUID | Уникальный идентификатор задания |
+
+**Ответ (200):**
+
+```json
+{
+  "message": "задание удалено"
+}
+```
+
+**Пример:**
+
+```bash
+curl -X DELETE "http://localhost:8080/api/v1/tasks/83b25796-49c5-4159-ae46-9e1196719288"
+```
+
+---
+
 ### POST /api/v1/check
 
 Проверить ответ ученика. Сервер сам определяет тип задания и выбирает метод проверки.
@@ -199,9 +327,9 @@ curl -X POST "http://localhost:8080/api/v1/check" \
 
 | Код | Описание | Пример |
 |-----|----------|--------|
-| `400` | Неверный запрос | Отсутствует `task_id` или `answer` |
-| `404` | Задание не найдено | Невалидный `task_id` |
-| `500` | Внутренняя ошибка | Ошибка Supabase или Python |
+| `400` | Неверный запрос | Отсутствует `task_id` или `answer`, невалидный UUID, пустой payload |
+| `404` | Задание не найдено | Несуществующий `task_id` |
+| `500` | Внутренняя ошибка | Ошибка Supabase (сеть, таймаут), ошибка Python |
 
 **Формат ошибки:**
 
@@ -340,7 +468,7 @@ curl -X POST "http://localhost:8080/api/v1/check" \
 | `PORT` | Порт Go-сервера (по умолчанию 8080) | Нет |
 | `SUPABASE_URL` | URL проекта Supabase | Да |
 | `SUPABASE_ANON_KEY` | Анонимный ключ Supabase | Да |
-| `SUPABASE_SERVICE_KEY` | Сервисный ключ Supabase | Нет |
+| `SUPABASE_SERVICE_KEY` | Сервисный ключ Supabase (нужен для записи) | Да |
 | `PYTHON_URL` | URL Python-сервера (по умолчанию http://localhost:5080) | Нет |
 
 ### config.yaml

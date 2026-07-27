@@ -51,6 +51,9 @@
 |-------|------|------------|
 | `GET` | `/health` | Health-check |
 | `GET` | `/api/v1/tasks` | Получить задания (фильтры, лимит max=100) |
+| `GET` | `/api/v1/tasks/:id` | Получить одно задание по UUID |
+| `PUT` | `/api/v1/tasks/:id` | Обновить задание (частичное обновление) |
+| `DELETE` | `/api/v1/tasks/:id` | Удалить задание |
 | `POST` | `/api/v1/check` | Проверить ответ (Go или Python) |
 
 ### Middleware
@@ -58,7 +61,8 @@
 | Middleware | Описание |
 |-----------|----------|
 | `gin.Recovery()` | Panic recovery |
-| `corsMiddleware()` | Whitelist origins |
+| `corsMiddleware()` | Whitelist origins, разрешены GET/POST/PUT/OPTIONS |
+| `bodySizeLimit()` | Ограничение тела запроса: 1 MB |
 | `requestLogger()` | Цветное логирование запросов |
 
 ### Сервер
@@ -69,6 +73,8 @@
 | `ReadTimeout` | 30s |
 | `WriteTimeout` | 30s |
 | `IdleTimeout` | 120s |
+| Graceful shutdown | SIGINT/SIGTERM → 10s на завершение |
+| Max request body | 1 MB |
 
 ### Стартовые проверки
 
@@ -105,6 +111,17 @@
 1. Если `task_type` задан в БД — используется он
 2. Если `task_type` пуст и `answer` равен `"-"` или пуст — тип = `code`
 3. Иначе — тип = `choice`
+
+### Supabase клиент
+
+| Параметр | Значение |
+|----------|----------|
+| Таймаут запроса | 10s |
+| Retry | Макс. 2 ретрая |
+| Backoff | Exponential: 200ms → 400ms → 800ms |
+| Ретраи на | Сетевые ошибки + 5xx |
+| Не ретраит на | 4xx (auth, not found, bad request) |
+| Методы | GET (Query), PATCH (Patch), DELETE (Delete) |
 
 ---
 
@@ -180,9 +197,12 @@
 
 | Путь | Куда идёт | Что делает | Статус |
 |------|-----------|------------|--------|
-| `/api/v1/tasks` | Go (8080) | Получить задание | ✅ |
-| `/api/v1/check` | Go (8080) | Проверить ответ | ✅ |
-| `/ai/v1/hint` | Python (5080) | AI-подсказка | 🔲 |
+| `GET /api/v1/tasks` | Go (8080) | Получить задания | ✅ |
+| `GET /api/v1/tasks/:id` | Go (8080) | Получить задание по ID | ✅ |
+| `PUT /api/v1/tasks/:id` | Go (8080) | Обновить задание | ✅ |
+| `DELETE /api/v1/tasks/:id` | Go (8080) | Удалить задание | ✅ |
+| `POST /api/v1/check` | Go (8080) | Проверить ответ | ✅ |
+| `POST /ai/v1/hint` | Python (5080) | AI-подсказка | 🔲 |
 
 ---
 

@@ -26,9 +26,12 @@
 │   Backend API    │      │   AI + Frontend              │
 │                  │      │                              │
 │ • GET /api/v1/tasks│    │ • раздача статики (HTML/CSS/JS)│
-│ • POST /api/v1/check│   │ • AI-подсказки               │
-│ • GET /health     │     │ • генерация заданий          │
-│ • CORS middleware │     │ • проксирование → Go         │
+│ • GET /api/v1/tasks/:id││ • AI-подсказки               │
+│ • PUT /api/v1/tasks/:id││ • генерация заданий          │
+│ • DEL /api/v1/tasks/:id││ • проксирование → Go         │
+│ • POST /api/v1/check│   │                              │
+│ • GET /health     │     │                              │
+│ • CORS + Retry    │     │                              │
 │ • Checker (6 типов)│    │                              │
 └──────┬───────────┘      └──────────┬───────────────────┘
        │                             │
@@ -262,6 +265,9 @@ static/
 |-------|------|----------|
 | `GET` | `/health` | Health-check |
 | `GET` | `/api/v1/tasks` | Получить задания (фильтры, лимит max=100) |
+| `GET` | `/api/v1/tasks/:id` | Получить задание по UUID |
+| `PUT` | `/api/v1/tasks/:id` | Обновить задание (частичное обновление) |
+| `DELETE` | `/api/v1/tasks/:id` | Удалить задание |
 | `POST` | `/api/v1/check` | Проверить ответ |
 
 ### Go → Supabase
@@ -352,15 +358,20 @@ exam-trainer-ai/
 
 | Мера | Реализация |
 |------|------------|
-| CORS | Whitelist origins (localhost:5500, 5080, 5081, 3000) |
+| CORS | Whitelist origins (localhost:5500, 5080, 5081, 3000), методы GET/POST/PUT/OPTIONS |
 | Лимит подсказок | `hints_used_today` в users, сброс каждые 24ч |
 | Валидация ответов | Checker проверяет тип и формат |
+| UUID-валидация | Regex на task_id до обращения к БД |
 | SQL-инъекции | Нет (Supabase REST API, не SQL) |
 | XSS | Escape на фронте, Content-Security-Policy |
 | Таймауты | ReadHeader: 10s, Read/Write: 30s, Idle: 120s |
+| Лимит тела запроса | 1 MB (MaxBytesReader) |
 | Python-запрос | Таймаут 15s, лимит ответа 1MB |
 | Max limit | `limit` ограничен до 100 |
+| Graceful shutdown | SIGINT/SIGTERM → 10s на завершение |
+| Retry | Supabase: 2 ретрая, exponential backoff |
 | Стартовые проверки | Сервер не запускается при ошибке конфига/БД |
+| Service key | Валидируется при старте (нужен для записи) |
 
 ---
 

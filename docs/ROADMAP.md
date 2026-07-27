@@ -21,15 +21,23 @@
 |--------|--------|
 | Настроить подключение к Supabase | ✅ |
 | Эндпоинт: GET /api/v1/tasks | ✅ |
+| Эндпоинт: GET /api/v1/tasks/:id | ✅ |
+| Эндпоинт: PUT /api/v1/tasks/:id | ✅ |
+| Эндпоинт: DELETE /api/v1/tasks/:id | ✅ |
 | Эндпоинт: POST /api/v1/check | ✅ |
 | Эндпоинт: GET /health | ✅ |
 | Проверка ответов (choice, number, string, multi, code, text) | ✅ |
 | Тесты на проверку ответов (30+ unit, 18 интеграционных) | ✅ |
-| CORS middleware | ✅ |
+| CORS middleware (GET, POST, PUT, OPTIONS) | ✅ |
 | Таймауты сервера (Read/Write/Idle) | ✅ |
+| Graceful shutdown (SIGINT/SIGTERM, 10s timeout) | ✅ |
 | Таймаут на Python-запрос (15s) | ✅ |
+| Лимит тела запроса (1 MB) | ✅ |
+| UUID-валидация на task_id | ✅ |
 | Max limit = 100 | ✅ |
+| Retry на Supabase (2 ретрая, exponential backoff) | ✅ |
 | Стартовые проверки (сервер не стартует при ошибке) | ✅ |
+| Валидация service_key | ✅ |
 | Эндпоинт: GET /api/v1/stats | 🔲 |
 | Эндпоинт: GET /api/v1/user/{id} | 🔲 |
 
@@ -185,7 +193,7 @@ MVP (2-3 недели)
 
 | Веха | Когда | Что получаем |
 |------|-------|--------------|
-| **Go API готов** | ✅ Сделано | tasks + check + CORS + health + тесты |
+| **Go API готов** | ✅ Сделано | CRUD + check + CORS + health + retry + тесты |
 | **Первый MVP** | Следующий шаг | Рабочий тренажёр, можно показать |
 | **Адаптив** | v2 | Система подстраивается под ученика |
 | **Монетизация** | v3 | Два тарифа, рефералы |
