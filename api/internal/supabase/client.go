@@ -9,6 +9,11 @@ import (
 	"time"
 )
 
+const (
+	maxRetries     = 2
+	retryBaseDelay = 200 * time.Millisecond
+)
+
 type Client struct {
 	baseURL    string
 	anonKey    string
@@ -43,6 +48,34 @@ func (c *Client) headersService() map[string]string {
 	}
 }
 
+// do — выполнение запроса с retry на сетевые ошибки и 5xx
+func (c *Client) do(req *http.Request) (*http.Response, error) {
+	var lastErr error
+
+	for attempt := 0; attempt <= maxRetries; attempt++ {
+		if attempt > 0 {
+			delay := retryBaseDelay * time.Duration(1<<(attempt-1))
+			time.Sleep(delay)
+		}
+
+		resp, err := c.http.Do(req)
+		if err != nil {
+			lastErr = fmt.Errorf("executing request: %w", err)
+			continue
+		}
+
+		if resp.StatusCode < 500 {
+			return resp, nil
+		}
+
+		body, _ := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		lastErr = fmt.Errorf("supabase returned %d: %s", resp.StatusCode, string(body))
+	}
+
+	return nil, lastErr
+}
+
 // RawQuery — GET-запрос к PostgREST
 func (c *Client) RawQuery(endpoint string, useServiceRole bool) ([]byte, error) {
 	url := fmt.Sprintf("%s/rest/v1/%s", c.baseURL, endpoint)
@@ -60,19 +93,15 @@ func (c *Client) RawQuery(endpoint string, useServiceRole bool) ([]byte, error) 
 		req.Header.Set(k, v)
 	}
 
-	resp, err := c.http.Do(req)
+	resp, err := c.do(req)
 	if err != nil {
-		return nil, fmt.Errorf("executing request: %w", err)
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("reading response: %w", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("supabase returned %d: %s", resp.StatusCode, string(body))
 	}
 
 	return body, nil
@@ -110,9 +139,9 @@ func (c *Client) Patch(endpoint string, useServiceRole bool, payload interface{}
 		req.Header.Set(k, v)
 	}
 
-	resp, err := c.http.Do(req)
+	resp, err := c.do(req)
 	if err != nil {
-		return fmt.Errorf("executing request: %w", err)
+		return err
 	}
 	defer resp.Body.Close()
 
@@ -142,9 +171,9 @@ func (c *Client) Delete(endpoint string, useServiceRole bool) error {
 		req.Header.Set(k, v)
 	}
 
-	resp, err := c.http.Do(req)
+	resp, err := c.do(req)
 	if err != nil {
-		return fmt.Errorf("executing request: %w", err)
+		return err
 	}
 	defer resp.Body.Close()
 
