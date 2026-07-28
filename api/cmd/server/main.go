@@ -168,10 +168,10 @@ func printBanner(port string) {
 
 func corsMiddleware() gin.HandlerFunc {
 	origins := map[string]bool{
-		"http://localhost:5500":  true,
-		"http://localhost:5080":  true,
-		"http://localhost:5081":  true,
-		"http://localhost:3000":  true,
+		"http://localhost:5500": true,
+		"http://localhost:5080": true,
+		"http://localhost:5081": true,
+		"http://localhost:3000": true,
 		"http://127.0.0.1:5500": true,
 		"http://127.0.0.1:5080": true,
 	}

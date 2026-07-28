@@ -5,6 +5,7 @@ from routes.proxy import proxy_bp
 from init import PYTHON_PORT, SUPABASE_URL, GO_PORT
 from time import sleep
 from routes.ai import ai_bp
+from routes.story import story_bp
 
 COLORS = {
     "GREEN": "\033[32m",
@@ -27,6 +28,7 @@ CORS(app, origins=[
 
 app.register_blueprint(proxy_bp)
 app.register_blueprint(ai_bp)
+app.register_blueprint(story_bp)
 if __name__ == "__main__":
     print(f"\n{COLORS['BOLD']}{COLORS['CYAN']}╔══════════════════════════════════════╗{COLORS['RESET']}")
     print(f"{COLORS['BOLD']}{COLORS['CYAN']}║{COLORS['RESET']}   {COLORS['BOLD']}Rubium Python Server{COLORS['RESET']}              {COLORS['BOLD']}{COLORS['CYAN']} ║{COLORS['RESET']}")
