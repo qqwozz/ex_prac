@@ -12,6 +12,7 @@
     <style>
         :root {
             --bg: #0F0F1A;
+            --sidebar-bg: rgba(255,255,255,0.02);
             --surface: rgba(255,255,255,0.03);
             --surface-hover: rgba(255,255,255,0.06);
             --glass: rgba(255,255,255,0.04);
@@ -27,12 +28,13 @@
             --text-muted: #64748B;
             --radius: 24px;
             --radius-sm: 16px;
+            --sidebar-width: 240px;
         }
         *{margin:0;padding:0;box-sizing:border-box}
         body{
             font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--text);
             min-height:100vh;min-height:100dvh;-webkit-font-smoothing:antialiased;
-            display:flex;flex-direction:column;overflow-x:hidden;
+            display:flex;overflow-x:hidden;
         }
         body::before{
             content:'';position:fixed;top:-300px;left:-300px;width:800px;height:800px;
@@ -45,36 +47,101 @@
             pointer-events:none;z-index:0;
         }
 
-        .app{display:flex;flex-direction:column;min-height:100vh;min-height:100dvh;position:relative;z-index:1}
+        /* ===== SIDEBAR ===== */
+        .sidebar{
+            position:fixed;left:0;top:0;bottom:0;z-index:100;
+            width:var(--sidebar-width);background:var(--sidebar-bg);
+            border-right:1px solid var(--glass-border);
+            backdrop-filter:blur(20px);
+            display:flex;flex-direction:column;
+            padding:20px 16px;
+            transition:transform 0.3s ease;
+        }
+        .sidebar-brand{
+            font-family:'Unbounded',sans-serif;font-size:1.3rem;font-weight:800;
+            padding:8px 12px 20px;letter-spacing:-1px;color:var(--text);
+            display:flex;align-items:center;gap:10px;
+        }
+        .sidebar-brand span{background:linear-gradient(135deg,var(--brand),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+        .sidebar-nav{flex:1;display:flex;flex-direction:column;gap:4px;padding:4px 0;overflow-y:auto}
+        .sidebar-nav::-webkit-scrollbar{width:3px}
+        .sidebar-nav::-webkit-scrollbar-thumb{background:var(--text-muted);border-radius:10px}
+
+        .nav-link{
+            display:flex;align-items:center;gap:14px;
+            padding:10px 14px;border-radius:var(--radius-sm);
+            color:var(--text-secondary);text-decoration:none;
+            font-size:0.85rem;font-weight:600;
+            transition:all 0.2s;letter-spacing:-0.2px;
+        }
+        .nav-link i{width:20px;font-size:1rem;text-align:center;flex-shrink:0}
+        .nav-link:hover{background:var(--surface-hover);color:var(--text)}
+        .nav-link.active{background:var(--brand-glow);color:var(--brand);box-shadow:0 0 20px var(--brand-glow)}
+        .nav-link .badge{
+            margin-left:auto;background:var(--brand);color:#0F0F1A;
+            font-size:0.55rem;font-weight:800;padding:2px 8px;border-radius:10px;
+            font-family:'JetBrains Mono',monospace;
+        }
+
+        .sidebar-footer{
+            border-top:1px solid var(--glass-border);padding-top:16px;margin-top:8px;
+        }
+        .sidebar-footer a{
+            text-decoration:none;color:inherit;display:flex;align-items:center;gap:12px;
+            padding:6px 8px;border-radius:var(--radius-sm);transition:background 0.2s;
+        }
+        .sidebar-footer a:hover{background:var(--surface-hover)}
+        .user-avatar{
+            width:36px;height:36px;border-radius:50%;
+            background:linear-gradient(135deg,var(--brand),var(--accent));
+            display:flex;align-items:center;justify-content:center;
+            font-weight:700;font-size:0.85rem;color:#fff;flex-shrink:0;
+        }
+        .sidebar-user-info{flex:1;min-width:0}
+        .sidebar-user-name{font-size:0.8rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .sidebar-user-email{font-size:0.65rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+        .logout-btn{
+            background:none;border:none;color:var(--text-muted);
+            cursor:pointer;padding:6px 8px;border-radius:8px;
+            transition:all 0.2s;font-size:0.9rem;margin-left:auto;
+        }
+        .logout-btn:hover{background:rgba(248,113,113,0.1);color:var(--danger)}
+
+        /* ===== MAIN CONTENT ===== */
+        .main-content{
+            margin-left:var(--sidebar-width);flex:1;min-height:100vh;min-height:100dvh;
+            display:flex;flex-direction:column;position:relative;z-index:1;
+        }
 
         .topbar{
             display:flex;align-items:center;justify-content:space-between;
-            padding:16px 24px;flex-shrink:0;
+            padding:16px 32px;flex-shrink:0;
+            border-bottom:1px solid var(--glass-border);
         }
-        .brand{font-family:'Unbounded',sans-serif;font-size:1.2rem;font-weight:800;letter-spacing:-1px;color:var(--text)}
-        .brand span{background:linear-gradient(135deg,var(--brand),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-        .user-name-top{
-            font-size:0.82rem;font-weight:600;color:var(--text-secondary);
-            padding:8px 16px;background:var(--glass);border:1px solid var(--glass-border);
-            border-radius:20px;backdrop-filter:blur(20px);
+        .topbar-left{display:flex;align-items:center;gap:16px}
+        .hamburger{
+            display:none;background:none;border:none;color:var(--text);
+            font-size:1.3rem;cursor:pointer;padding:6px;
         }
+        .page-title{font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--text-muted);font-family:'JetBrains Mono',monospace}
+        .topbar-right{display:flex;align-items:center;gap:12px}
 
         .content{
-            flex:1;display:grid;grid-template-columns:1fr 1fr;
-            grid-template-rows:auto auto auto;
-            gap:16px;padding:8px 24px 100px;
+            flex:1;padding:24px 32px 32px;
+            max-width:1000px;margin:0 auto;width:100%;
         }
         @keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
 
-        /* Hero — spans full width */
+        /* ===== HERO ===== */
         .hero-card{
-            grid-column:1/-1;
             background:linear-gradient(135deg,rgba(167,139,250,0.1),rgba(244,114,182,0.06));
             border:1px solid rgba(167,139,250,0.1);border-radius:var(--radius);
-            padding:28px 28px 24px;position:relative;overflow:hidden;
+            padding:32px 32px 28px;position:relative;overflow:hidden;
             animation:fadeUp 0.5s ease;
             display:flex;align-items:center;justify-content:space-between;
-            gap:20px;flex-wrap:wrap;
+            gap:20px;flex-wrap:wrap;margin-bottom:32px;
         }
         .hero-card::after{
             content:'';position:absolute;top:-40px;right:-40px;width:160px;height:160px;
@@ -83,20 +150,14 @@
         }
         .hero-left{position:relative;z-index:1;min-width:0}
         .hero-greeting{font-size:0.85rem;color:var(--text-secondary);margin-bottom:6px}
-        .hero-name{font-size:2.2rem;font-weight:800;letter-spacing:-1px}
+        .hero-name{font-size:2.4rem;font-weight:800;letter-spacing:-1px}
         .hero-name span{background:linear-gradient(135deg,var(--brand),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-        .hero-stats{display:flex;gap:24px;margin-top:16px}
-        .hero-stat .num{font-size:1.3rem;font-weight:800;letter-spacing:-0.5px}
-        .hero-stat .lbl{font-size:0.62rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px;font-family:'JetBrains Mono',monospace}
-        .num.purple{color:var(--brand)} .num.green{color:var(--success)} .num.amber{color:var(--warning)}
-
-        .hero-actions{display:flex;flex-direction:column;gap:10px;position:relative;z-index:1;flex-shrink:0}
+        .hero-actions{display:flex;gap:12px;position:relative;z-index:1;flex-shrink:0;flex-wrap:wrap}
         .hero-btn{
-            display:flex;align-items:center;gap:10px;padding:14px 22px;
+            display:flex;align-items:center;gap:10px;padding:14px 24px;
             border-radius:var(--radius-sm);font-weight:700;font-size:0.88rem;
             cursor:pointer;transition:all 0.3s;border:none;font-family:inherit;
             text-decoration:none;letter-spacing:-0.3px;white-space:nowrap;
-            min-width:180px;justify-content:center;
         }
         .hero-btn.daily{
             background:linear-gradient(135deg,#FBBF24,#F59E0B);
@@ -109,175 +170,321 @@
         }
         .hero-btn.story:hover{transform:translateY(-2px);box-shadow:0 14px 36px rgba(139,92,246,0.35)}
 
-        /* Glass card */
-        .glass-card{
+        /* ===== SECTION ===== */
+        .section{margin-bottom:40px}
+        .section-title{
+            font-size:1.4rem;font-weight:800;margin-bottom:16px;letter-spacing:-0.5px;
+            display:flex;align-items:center;gap:12px;
+        }
+        .section-title i{color:var(--brand);font-size:1.2rem}
+        .section-sub{color:var(--text-secondary);font-size:0.95rem;margin-bottom:20px;line-height:1.6}
+
+        /* ===== ABOUT ===== */
+        .about-text{
+            color:var(--text-secondary);font-size:0.95rem;line-height:1.7;
+            max-width:700px;padding:4px 0;
+        }
+        .about-text strong{color:var(--text)}
+
+        /* ===== FEATURES GRID ===== */
+        .features-grid{
+            display:grid;grid-template-columns:repeat(2,1fr);gap:16px;
+        }
+        .feature-card{
             background:var(--glass);border:1px solid var(--glass-border);
-            border-radius:var(--radius);padding:22px 20px;
-            backdrop-filter:blur(20px);animation:fadeUp 0.6s ease;
-            display:flex;flex-direction:column;justify-content:center;
+            border-radius:var(--radius-sm);padding:20px 22px;
+            transition:all 0.3s;cursor:default;
         }
-        .card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
-        .card-title{font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted);font-family:'JetBrains Mono',monospace}
-        .card-badge{font-size:0.6rem;color:var(--brand);font-family:'JetBrains Mono',monospace;font-weight:600;text-decoration:none}
+        .feature-card:hover{background:var(--surface-hover);border-color:rgba(167,139,250,0.15);transform:translateY(-2px)}
+        .feature-card .icon{
+            font-size:1.5rem;color:var(--brand);margin-bottom:10px;display:block;
+        }
+        .feature-card h3{font-size:0.95rem;font-weight:700;margin-bottom:4px}
+        .feature-card p{font-size:0.8rem;color:var(--text-secondary);line-height:1.5}
 
-        .week-dots{display:flex;gap:6px}
-        .week-dot{
-            flex:1;aspect-ratio:1;border-radius:50%;transition:all 0.3s;
-            background:rgba(255,255,255,0.03);border:1.5px solid rgba(255,255,255,0.06);
-            display:flex;align-items:center;justify-content:center;
-            font-size:0.55rem;color:var(--text-muted);font-family:'JetBrains Mono',monospace;
+        /* ===== STEPS ===== */
+        .steps-grid{
+            display:grid;grid-template-columns:repeat(3,1fr);gap:16px;
         }
-        .week-dot.done{background:rgba(52,211,153,0.12);border-color:var(--success);color:var(--success)}
-        .week-dot.miss{background:rgba(248,113,113,0.08);border-color:var(--danger);color:var(--danger)}
-        .week-dot.today{background:rgba(167,139,250,0.12);border-color:var(--brand);color:var(--brand);box-shadow:0 0 12px var(--brand-glow)}
+        .step-card{
+            background:var(--glass);border:1px solid var(--glass-border);
+            border-radius:var(--radius-sm);padding:20px 22px;text-align:center;
+        }
+        .step-number{
+            display:inline-block;width:32px;height:32px;line-height:32px;
+            border-radius:50%;background:var(--brand-glow);color:var(--brand);
+            font-weight:800;font-size:0.8rem;margin-bottom:10px;
+        }
+        .step-card h3{font-size:0.9rem;font-weight:700;margin-bottom:4px}
+        .step-card p{font-size:0.78rem;color:var(--text-secondary);line-height:1.5}
 
-        .topics-row{display:flex;gap:8px;flex-wrap:wrap}
-        .topic-chip{
-            padding:8px 14px;border-radius:18px;font-size:0.72rem;font-weight:600;
-            background:var(--glass);border:1.5px solid var(--glass-border);
-            cursor:pointer;transition:all 0.25s;text-decoration:none;color:var(--text-secondary);
-            white-space:nowrap;
+        /* ===== DEVELOPERS ===== */
+        .devs-grid{
+            display:grid;grid-template-columns:repeat(2,1fr);gap:16px;
         }
-        .topic-chip:hover{background:var(--surface-hover);border-color:rgba(167,139,250,0.3);color:var(--text);transform:translateY(-1px)}
-        .topic-chip.done{border-color:rgba(52,211,153,0.2);color:var(--success)}
-        .topic-chip.active{border-color:var(--brand);color:var(--brand);background:rgba(167,139,250,0.06)}
+        .dev-card{
+            background:var(--glass);border:1px solid var(--glass-border);
+            border-radius:var(--radius-sm);padding:20px 22px;
+            display:flex;gap:16px;align-items:center;
+            transition:all 0.3s;
+        }
+        .dev-card:hover{background:var(--surface-hover);border-color:rgba(167,139,250,0.15)}
+        .dev-avatar{
+            width:48px;height:48px;border-radius:50%;flex-shrink:0;
+            overflow:hidden;background:var(--surface);
+            border:2px solid var(--glass-border);
+        }
+        .dev-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+        .dev-info h4{font-size:0.95rem;font-weight:700}
+        .dev-links{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+        .dev-links a{
+            color:var(--text-muted);font-size:0.75rem;text-decoration:none;
+            display:inline-flex;align-items:center;gap:4px;
+            transition:color 0.2s;padding:2px 6px;border-radius:4px;
+        }
+        .dev-links a:hover{color:var(--brand);background:var(--surface-hover)}
 
-        .bottom-nav{
-            display:flex;justify-content:space-around;align-items:center;
-            padding:10px 8px 18px;border-top:1px solid rgba(255,255,255,0.04);
-            background:rgba(15,15,26,0.9);backdrop-filter:blur(20px);
-            z-index:100;flex-shrink:0;
+        /* ===== MOBILE ===== */
+        @media (max-width: 768px) {
+            .sidebar{transform:translateX(-100%);width:280px}
+            .sidebar.open{transform:translateX(0)}
+            .main-content{margin-left:0}
+            .hamburger{display:block}
+            .topbar{padding:12px 16px}
+            .content{padding:16px}
+            .hero-card{flex-direction:column;align-items:flex-start;padding:24px 20px}
+            .hero-name{font-size:1.8rem}
+            .hero-actions{flex-direction:column;width:100%}
+            .hero-btn{width:100%;justify-content:center}
+            .features-grid{grid-template-columns:1fr}
+            .steps-grid{grid-template-columns:1fr}
+            .devs-grid{grid-template-columns:1fr}
+            .overlay{
+                display:none;position:fixed;inset:0;
+                background:rgba(0,0,0,0.5);z-index:99;
+            }
+            .overlay.show{display:block}
+            .section-title{font-size:1.2rem}
+            .dev-card{flex-direction:row;align-items:center}
         }
-        .nav-item{
-            display:flex;flex-direction:column;align-items:center;gap:4px;
-            text-decoration:none;color:var(--text-muted);font-size:0.62rem;
-            font-weight:600;transition:all 0.2s;padding:4px 12px;border-radius:12px;
-            font-family:'JetBrains Mono',monospace;letter-spacing:0.5px;
-        }
-        .nav-item.active{color:var(--brand)}
-        .nav-item i{font-size:1.1rem}
-
-        @media (max-width: 600px) {
-            .content{grid-template-columns:1fr;padding:8px 16px 100px}
-            .hero-card{flex-direction:column;align-items:flex-start}
-            .hero-name{font-size:1.7rem}
-            .hero-actions{flex-direction:row;width:100%}
-            .hero-btn{flex:1;min-width:0;font-size:0.8rem;padding:14px 16px}
+        @media (max-width: 480px) {
+            .hero-name{font-size:1.5rem}
+            .hero-card{padding:20px 16px}
+            .feature-card{padding:16px}
+            .dev-card{flex-direction:column;text-align:center}
         }
     </style>
 </head>
 <body>
-<div class="app">
-    <div class="topbar">
-        <div class="brand"><span>Rub</span>ium</div>
-        <div class="user-name-top" id="userNameTop">...</div>
+
+<!-- ===== OVERLAY (mobile) ===== -->
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
+<!-- ===== SIDEBAR ===== -->
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand"><span>Rub</span>ium</div>
+    <nav class="sidebar-nav">
+        <a href="index.html" class="nav-link active"><i class="fas fa-house"></i> Главная</a>
+        <a href="trainer.html" class="nav-link"><i class="fas fa-pencil"></i> Тренажёр</a>
+        <a href="daily.html" class="nav-link"><i class="fas fa-calendar-day"></i> Ежедневные</a>
+        <a href="exam.html" class="nav-link"><i class="fas fa-file-pen"></i> Варианты</a>
+        <a href="stats.html" class="nav-link"><i class="fas fa-chart-line"></i> Статистика</a>
+        <a href="notebook.html" class="nav-link"><i class="fas fa-book"></i> Тетради</a>
+    </nav>
+    <div class="sidebar-footer">
+        <a href="profile.html">
+            <div class="user-avatar" id="sidebarAvatar">И</div>
+            <div class="sidebar-user-info">
+                <div class="sidebar-user-name" id="sidebarName">...</div>
+                <div class="sidebar-user-email" id="sidebarEmail">...</div>
+            </div>
+            <button class="logout-btn" onclick="event.stopPropagation();logout()" title="Выйти">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </a>
     </div>
+</aside>
+
+<!-- ===== MAIN CONTENT ===== -->
+<div class="main-content">
+    <header class="topbar">
+        <div class="topbar-left">
+            <button class="hamburger" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+            <span class="page-title">Главная</span>
+        </div>
+    </header>
 
     <div class="content">
-        <!-- Hero -->
+        <!-- HERO -->
         <div class="hero-card">
             <div class="hero-left">
                 <div class="hero-greeting">С возвращением</div>
                 <div class="hero-name"><span id="userName">...</span></div>
-                <div class="hero-stats">
-                    <div class="hero-stat"><div class="num purple" id="statSolved">0</div><div class="lbl">Решено</div></div>
-                    <div class="hero-stat"><div class="num green" id="statCorrect">0</div><div class="lbl">Верно</div></div>
-                    <div class="hero-stat"><div class="num amber" id="statAccuracy">—%</div><div class="lbl">Точность</div></div>
-                </div>
             </div>
             <div class="hero-actions">
                 <a href="trainer.html?mode=daily" class="hero-btn daily">
                     <i class="fa-solid fa-calendar-check"></i> Ежедневные задания
                 </a>
-                <a href="trainer.html?mode=story" class="hero-btn story">
-                    <i class="fa-solid fa-book-open"></i> Сюжетный режим
+                <a href="trainer.html" class="hero-btn story">
+                    <i class="fa-solid fa-play"></i> Начать тренировку
                 </a>
             </div>
         </div>
 
-        <!-- Week -->
-        <div class="glass-card">
-            <div class="card-header">
-                <span class="card-title">Неделя</span>
-                <span class="card-badge" id="streakLabel">🔥 0 дн.</span>
+        <!-- ABOUT -->
+        <section class="section">
+            <div class="section-title"><i class="fas fa-info-circle"></i> О Rubium</div>
+            <div class="about-text">
+                <strong>Rubium</strong> — экосистема для подготовки к экзаменам и учёбы в университете. 
+                Тренажёр с заданиями из ФИПИ, <strong>рабочая тетрадь</strong> для конспектов, 
+                <strong>кастомные варианты</strong> ЕГЭ/ОГЭ и <strong>сообщество</strong>, где можно делиться материалами.
+                Подходит для школьников 9–11 классов, студентов и преподавателей.
             </div>
-            <div class="week-dots" id="weekDots"></div>
-        </div>
+        </section>
 
-        <!-- Topics -->
-        <div class="glass-card">
-            <div class="card-header">
-                <span class="card-title">Темы</span>
+        <!-- FEATURES -->
+        <section class="section">
+            <div class="section-title"><i class="fas fa-cubes"></i> Возможности</div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <span class="icon"><i class="fas fa-brain"></i></span>
+                    <h3>Тренажёр</h3>
+                    <p>Задания из открытого банка ФИПИ с мгновенной проверкой и AI-подсказками. Поддержка математики, информатики и других предметов.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="icon"><i class="fas fa-book"></i></span>
+                    <h3>Рабочая тетрадь</h3>
+                    <p>Markdown-редактор с формулами, кодом и автосохранением. Веди конспекты и публикуй их в сообществе.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="icon"><i class="fas fa-file-pen"></i></span>
+                    <h3>Кастомные варианты</h3>
+                    <p>Собирай вариант из нужных номеров, решай с таймером и получай автопроверку в баллах ЕГЭ/ОГЭ.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="icon"><i class="fas fa-chart-line"></i></span>
+                    <h3>Статистика</h3>
+                    <p>Личный прогресс по темам, точность, стрик дней и рейтинг среди других учеников.</p>
+                </div>
             </div>
-            <div class="topics-row" id="topicsRow"></div>
-        </div>
-    </div>
+        </section>
 
-    <div class="bottom-nav">
-        <a href="dashboard.html" class="nav-item active"><i class="fa-solid fa-house"></i> Главная</a>
-        <a href="story.html" class="nav-item"><i class="fa-solid fa-bolt"></i> Игровой режим</a>
-        <a href="stats.html" class="nav-item"><i class="fa-solid fa-chart-bar"></i> Ежедневные задачи</a>
-        <a href="profile.html" class="nav-item"><i class="fa-solid fa-user"></i> Профиль</a>
-        <button onclick="logout()" style="background:none;border:none;color:var(--text-muted);font-family:'JetBrains Mono',monospace;font-size:0.62rem;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;padding:4px 12px"><i class="fa-solid fa-arrow-right-from-bracket"></i> Выйти</button>
+        <!-- STEPS -->
+        <section class="section">
+            <div class="section-title"><i class="fas fa-route"></i> Как начать</div>
+            <div class="steps-grid">
+                <div class="step-card">
+                    <div class="step-number">1</div>
+                    <h3>Зарегистрируйся</h3>
+                    <p>Создай аккаунт в Rubium или войди через Stud&School</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">2</div>
+                    <h3>Выбери предмет</h3>
+                    <p>Математика, информатика, физика, русский язык и другие</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">3</div>
+                    <h3>Начни заниматься</h3>
+                    <p>Решай задания, веди тетрадь, создавай варианты и следи за прогрессом</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- DEVELOPERS -->
+        <section class="section">
+            <div class="section-title"><i class="fas fa-code"></i> Разработчики</div>
+            <div class="devs-grid" id="devsGrid">
+                <!-- Загружаются через JS -->
+            </div>
+        </section>
     </div>
 </div>
 
 <script>
     const API = 'http://localhost:5080';
-    const DAYS = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
 
+    // ===== SIDEBAR TOGGLE =====
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('overlay').classList.toggle('show');
+    }
+    function closeSidebar() {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('overlay').classList.remove('show');
+    }
+
+    // ===== DEVELOPERS DATA =====
+    const developers = [
+        {
+            name: 'Илья Емельянов',
+            github: 'nsdmlk',
+            telegram: 'KantervilleGhost',
+            avatar: 'https://avatars.githubusercontent.com/nsdmlk'
+        },
+        {
+            name: 'Дима Киселёв',
+            github: 'qqwozz',
+            telegram: 'onixxed',
+            avatar: 'https://avatars.githubusercontent.com/qqwozz'
+        }
+    ];
+
+    function renderDevelopers() {
+        const container = document.getElementById('devsGrid');
+        container.innerHTML = developers.map(dev => `
+            <div class="dev-card">
+                <div class="dev-avatar">
+                    <img src="${dev.avatar}" alt="${dev.name}" loading="lazy" 
+                         onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(135deg,var(--brand),var(--accent))';this.parentElement.textContent='${dev.name[0]}'">
+                </div>
+                <div class="dev-info">
+                    <h4>${dev.name}</h4>
+                    <div class="dev-links">
+                        <a href="https://github.com/${dev.github}" target="_blank"><i class="fab fa-github"></i> ${dev.github}</a>
+                        <a href="https://t.me/${dev.telegram}" target="_blank"><i class="fab fa-telegram"></i> ${dev.telegram}</a>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // ===== INIT =====
     async function init() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) { window.location.href = 'login.html'; return; }
-        const name = user.user_metadata?.first_name || user.email?.split('@')[0] || 'ученик';
-        document.getElementById('userName').textContent = name;
-        document.getElementById('userNameTop').textContent = name;
-        loadData();
-    }
 
-    function loadData() {
-        const s = JSON.parse(localStorage.getItem('rubium_stats') || '{"solved":0,"correct":0}');
-        const streak = JSON.parse(localStorage.getItem('rubium_streak') || '{"days":0,"lastDate":""}');
-        const completedTopics = JSON.parse(localStorage.getItem('rubium_topics') || '[]');
-        const history = JSON.parse(localStorage.getItem('rubium_history') || '[]');
+        const { data: rubiumUser, error } = await supabase
+            .from('rubium_users')
+            .select('*')
+            .eq('auth_id', user.id)
+            .maybeSingle();
 
-        document.getElementById('statSolved').textContent = s.solved;
-        document.getElementById('statCorrect').textContent = s.correct;
-        document.getElementById('statAccuracy').textContent = s.solved > 0 ? Math.round((s.correct/s.solved)*100)+'%' : '—%';
-        document.getElementById('streakLabel').textContent = `🔥 ${streak.days} дн.`;
-
-        const today = new Date();
-        let weekHtml = '';
-        for (let i = 6; i >= 0; i--) {
-            const d = new Date(today); d.setDate(d.getDate()-i);
-            const key = d.toISOString().split('T')[0];
-            const daySolved = history.filter(h => (h.date||h.timestamp?.split('T')[0]) === key).length;
-            const isToday = i === 0;
-            let cls = '';
-            if (daySolved > 0) cls = 'done';
-            else if (!isToday) cls = 'miss';
-            if (isToday) cls = 'today';
-            weekHtml += `<div class="week-dot ${cls}">${DAYS[new Date(d).getDay()===0?6:new Date(d).getDay()-1]||DAYS[6]}</div>`;
+        let name = 'ученик';
+        let email = user.email || '';
+        if (rubiumUser) {
+            name = rubiumUser.first_name || rubiumUser.email?.split('@')[0] || 'ученик';
+            email = rubiumUser.email || email;
+        } else {
+            name = user.user_metadata?.first_name || user.email?.split('@')[0] || 'ученик';
         }
-        document.getElementById('weekDots').innerHTML = weekHtml;
 
-        const allTopics = [
-            {id:'arithmetic',name:'Арифметика'},{id:'equations',name:'Уравнения'},
-            {id:'geometry',name:'Геометрия'},{id:'functions',name:'Функции'},
-            {id:'probability',name:'Вероятность'},{id:'trigonometry',name:'Тригонометрия'},
-        ];
-        document.getElementById('topicsRow').innerHTML = allTopics.map(t => {
-            const done = completedTopics.includes(t.id);
-            const active = !done && (completedTopics.length === allTopics.findIndex(x=>x.id===t.id));
-            return `<a href="trainer.html?subject=math&topic=${t.id}" class="topic-chip ${done?'done':active?'active':''}">${t.name}</a>`;
-        }).join('');
+        const initial = (name?.[0] || 'У').toUpperCase();
+
+        document.getElementById('userName').textContent = name;
+        document.getElementById('sidebarName').textContent = name;
+        document.getElementById('sidebarEmail').textContent = email;
+        document.getElementById('sidebarAvatar').textContent = initial;
+
+        renderDevelopers();
     }
 
+    // ===== LOGOUT =====
     async function logout() {
-        ['rubium_stats','rubium_history','rubium_streak','rubium_topic_stats','rubium_topics'].forEach(k=>localStorage.removeItem(k));
         await supabase.auth.signOut();
-        window.location.href='login.html';
+        window.location.href = 'login.html';
     }
+
     init();
 </script>
 </body>
