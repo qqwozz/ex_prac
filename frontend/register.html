@@ -70,7 +70,6 @@
 <body>
     <div class="auth-box">
         <a href="index.html" class="logo">
-            <img src="data/logo.png" alt="Rubium">
             <div class="logo-text"><span>Rub</span>ium</div>
         </a>
         <p class="subtitle">Создай аккаунт и начни подготовку</p>
@@ -135,10 +134,14 @@
             fill.style.background = colors[score] || '#EF4444';
         }
 
-        supabase.auth.signOut();
+        // Выход перед регистрацией
+        (async function() {
+            await supabase.auth.signOut();
+        })();
 
         document.getElementById('registerForm').addEventListener('submit', async function(e) {
             e.preventDefault();
+            
             const firstName = document.getElementById('firstName').value.trim();
             const lastName = document.getElementById('lastName').value.trim();
             const email = document.getElementById('email').value.trim();
@@ -153,6 +156,7 @@
                 return;
             }
 
+            // 1. Регистрация в Supabase Auth
             const { data, error } = await supabase.auth.signUp({
                 email,
                 password,
@@ -173,12 +177,49 @@
                 return;
             }
 
-            if (data.user) {
-                showSuccess('Аккаунт создан! Перенаправляем...');
-                setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 1500);
+            const user = data.user;
+            if (!user) {
+                showError('Проверьте почту для подтверждения регистрации');
+                return;
             }
+
+            // 2. Создаём запись в Rubium users (НЕ пишем в Stud&School)
+            const { error: rubiumError } = await supabase
+                .from('rubium_users')
+                .upsert({
+                    auth_id: user.id,
+                    email: user.email,
+                    first_name: firstName,
+                    last_name: lastName || '',
+                    provider: 'rubium',
+                    xp: 0,
+                    level: 1,
+                    streak: 0,
+                    last_streak_date: null,
+                    tasks_solved: 0,
+                    tasks_correct: 0,
+                    accuracy: 0,
+                    daily_reminder: true,
+                    dark_mode: true,
+                    notifications_enabled: true,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                }, { 
+                    onConflict: 'auth_id',
+                    ignoreDuplicates: false 
+                });
+
+            if (rubiumError) {
+                console.error('❌ Rubium users insert error:', rubiumError);
+                showError('Ошибка при создании профиля');
+                return;
+            }
+
+            console.log('✅ Rubium регистрация успешна:', user.email);
+            showSuccess('Аккаунт создан! Перенаправляем...');
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1500);
         });
     </script>
 </body>
