@@ -12,16 +12,11 @@
     <style>
         :root {
             --bg: #0F0F1A;
-            --surface: rgba(255,255,255,0.03);
-            --surface-hover: rgba(255,255,255,0.06);
             --glass: rgba(255,255,255,0.04);
             --glass-border: rgba(255,255,255,0.06);
             --brand: #A78BFA;
             --brand-glow: rgba(167,139,250,0.15);
             --accent: #F472B6;
-            --success: #34D399;
-            --warning: #FBBF24;
-            --danger: #F87171;
             --text: #F1F5F9;
             --text-secondary: #94A3B8;
             --text-muted: #64748B;
@@ -47,7 +42,7 @@
 
         .auth-box{
             background:var(--glass);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);
-            padding:44px 36px;border-radius:var(--radius);width:90%;max-width:420px;
+            padding:44px 36px;border-radius:var(--radius);width:90%;max-width:400px;
             border:1px solid var(--glass-border);position:relative;z-index:1;animation:fadeInUp 0.5s ease
         }
         @keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
@@ -71,46 +66,15 @@
         .btn-primary{background:linear-gradient(135deg,var(--brand),#8B5CF6);color:#fff;margin:6px 0 18px;box-shadow:0 6px 18px var(--brand-glow)}
         .btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(167,139,250,0.3);background:linear-gradient(135deg,#8B5CF6,#7C3AED)}
 
-        .btn-stud{background:linear-gradient(135deg,#34D399,#059669);color:#0F0F1A;margin:6px 0 18px;box-shadow:0 6px 18px rgba(52,211,153,0.15)}
-        .btn-stud:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(52,211,153,0.25);background:linear-gradient(135deg,#059669,#047857);color:#fff}
-
-        .divider{display:flex;align-items:center;gap:14px;margin:20px 0;color:var(--text-muted);font-size:0.68rem;text-transform:uppercase;letter-spacing:2px;font-weight:700;font-family:'JetBrains Mono',monospace}
-        .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--glass-border)}
-
-        .oauth-row{display:flex;gap:8px;margin-bottom:8px}
-        .btn-oauth{
-            flex:1;padding:10px 6px;border-radius:var(--radius-sm);border:1.5px solid var(--glass-border);
-            background:rgba(255,255,255,0.02);font-family:inherit;font-size:0.76rem;font-weight:600;
-            cursor:pointer;transition:all 0.25s ease;color:var(--text-secondary);text-align:center
-        }
-        .btn-oauth:hover{background:var(--surface-hover);border-color:var(--brand);color:var(--text);transform:translateY(-1px)}
+        .error{background:rgba(248,113,113,0.04);color:#F87171;padding:12px 14px;border-radius:var(--radius-sm);margin-bottom:18px;display:none;font-size:0.8rem;border:1.5px solid rgba(248,113,113,0.12);font-weight:500;text-align:center}
 
         .link{text-align:center;margin-top:18px;font-size:0.85rem;color:var(--text-secondary)}
         .link a{color:var(--brand);text-decoration:none;font-weight:600}
         .link a:hover{text-decoration:underline}
 
-        .error{background:rgba(248,113,113,0.04);color:var(--danger);padding:12px 14px;border-radius:var(--radius-sm);margin-bottom:18px;display:none;font-size:0.8rem;border:1.5px solid rgba(248,113,113,0.12);font-weight:500;text-align:center}
-
         .back-link{text-align:center;margin-top:16px;font-size:0.8rem}
         .back-link a{color:var(--text-muted);text-decoration:none;display:inline-flex;align-items:center;gap:5px;transition:color 0.3s}
         .back-link a:hover{color:var(--brand)}
-
-        .mode-toggle{display:flex;gap:8px;margin-bottom:24px;background:var(--glass);border-radius:var(--radius-sm);padding:4px;border:1px solid var(--glass-border)}
-        .mode-toggle button{
-            flex:1;padding:10px;border:none;border-radius:12px;background:transparent;
-            font-family:inherit;font-size:0.8rem;font-weight:700;cursor:pointer;
-            transition:all 0.3s;color:var(--text-muted)
-        }
-        .mode-toggle button.active{
-            background:var(--surface-hover);color:var(--text);box-shadow:0 2px 8px rgba(0,0,0,0.2)
-        }
-        .mode-toggle button:hover{color:var(--text)}
-
-        .form-container{display:block}
-        .form-container.hidden{display:none}
-
-        .badge-stud{display:inline-block;background:rgba(52,211,153,0.1);color:var(--success);font-size:0.6rem;padding:2px 10px;border-radius:10px;font-weight:700;letter-spacing:0.5px;margin-left:6px}
-        .badge-rubium{display:inline-block;background:rgba(167,139,250,0.1);color:var(--brand);font-size:0.6rem;padding:2px 10px;border-radius:10px;font-weight:700;letter-spacing:0.5px;margin-left:6px}
     </style>
 </head>
 <body>
@@ -118,68 +82,28 @@
         <a href="index.html" class="logo">
             <div class="logo-text"><span>Rub</span>ium</div>
         </a>
-        <p class="subtitle">Тренажёр для подготовки к экзаменам</p>
+        <p class="subtitle">Войди и продолжай подготовку</p>
 
         <div class="error" id="error"></div>
 
-        <!-- Переключатель режимов -->
-        <div class="mode-toggle">
-            <button class="active" id="modeRubium" onclick="switchMode('rubium')">
-                Rubium ID
-            </button>
-            <button id="modeStud" onclick="switchMode('stud')">
-                Stud&School ID
-            </button>
-        </div>
+        <form id="loginForm">
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="email" placeholder="max@example.com" required autocomplete="email">
+            </div>
+            <div class="form-group">
+                <label>Пароль</label>
+                <input type="password" id="password" placeholder="Ваш пароль" required autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn btn-primary">Войти</button>
+        </form>
 
-        <!-- Форма Rubium -->
-        <div class="form-container" id="rubiumForm">
-            <form id="loginRubiumForm">
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" id="rubiumEmail" placeholder="max@example.com" required autocomplete="email">
-                </div>
-                <div class="form-group">
-                    <label>Пароль</label>
-                    <input type="password" id="rubiumPassword" placeholder="Ваш пароль" required autocomplete="current-password">
-                </div>
-                <button type="submit" class="btn btn-primary">Войти в Rubium</button>
-            </form>
-        </div>
-
-        <!-- Форма Stud&School -->
-        <div class="form-container hidden" id="studForm">
-            <form id="loginStudForm">
-                <div class="form-group">
-                    <label>Email Stud&School</label>
-                    <input type="email" id="studEmail" placeholder="ваша@почта.ру" required autocomplete="email">
-                </div>
-                <div class="form-group">
-                    <label>Пароль Stud&School</label>
-                    <input type="password" id="studPassword" placeholder="Пароль от школы" required autocomplete="current-password">
-                </div>
-                <button type="submit" class="btn btn-stud">Войти через Stud&School</button>
-            </form>
-        </div>
-
-        <div class="divider">или</div>
-
-        <div class="oauth-row">
-            <button class="btn-oauth" onclick="loginWithOAuth('vk')">VK ID</button>
-            <button class="btn-oauth" onclick="loginWithOAuth('yandex')">Yandex ID</button>
-        </div>
-
-        <div class="link">Нет аккаунта? 
-            <a href="#" id="registerLink" onclick="switchMode('rubium')">Зарегистрироваться в Rubium</a>
-            <span style="color:var(--text-muted);margin:0 4px">или</span>
-            <a href="#" onclick="switchMode('stud')">в Stud&School</a>
-        </div>
+        <div class="link">Нет аккаунта? <a href="register.html">Зарегистрироваться</a></div>
         <div class="back-link"><a href="index.html"><i class="fas fa-arrow-left"></i> На главную</a></div>
     </div>
 
     <script>
         const errorEl = document.getElementById('error');
-        let currentMode = 'rubium';
 
         function showError(msg) {
             errorEl.textContent = msg;
@@ -187,142 +111,80 @@
             setTimeout(() => errorEl.style.display = 'none', 5000);
         }
 
-        function switchMode(mode) {
-            currentMode = mode;
-            document.getElementById('modeRubium').classList.toggle('active', mode === 'rubium');
-            document.getElementById('modeStud').classList.toggle('active', mode === 'stud');
-            document.getElementById('rubiumForm').classList.toggle('hidden', mode !== 'rubium');
-            document.getElementById('studForm').classList.toggle('hidden', mode !== 'stud');
-            
-            const registerLink = document.getElementById('registerLink');
-            if (mode === 'rubium') {
-                registerLink.textContent = 'Зарегистрироваться в Rubium';
-                registerLink.onclick = () => window.location.href = 'register_rubium.html';
-            } else {
-                registerLink.textContent = 'Зарегистрироваться в Stud&School';
-                registerLink.onclick = () => window.location.href = 'register.html';
-            }
-        }
-
         // Выход перед логином
         (async function() {
             await supabase.auth.signOut();
         })();
 
-        // === Логин в Rubium ===
-        document.getElementById('loginRubiumForm').addEventListener('submit', async function(e) {
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            const email = document.getElementById('rubiumEmail').value.trim();
-            const password = document.getElementById('rubiumPassword').value;
-            if (!email || !password) { showError('Заполните email и пароль'); return; }
+            
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
 
-            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+            if (!email || !password) {
+                showError('Заполните email и пароль');
+                return;
+            }
+
+            // 1. Вход через Supabase Auth
+            const { data, error } = await supabase.auth.signInWithPassword({ 
+                email, 
+                password 
+            });
+
             if (error) {
-                showError(error.message.includes('Invalid login credentials') ? 'Неверный email или пароль' : error.message);
-                return;
-            }
-            if (!data.user) { showError('Ошибка входа'); return; }
-
-            // Проверяем, есть ли пользователь в rubium_users
-            const { data: rubiumUser, error: rubiumError } = await supabase
-                .from('rubium_users')
-                .select('*')
-                .eq('auth_id', data.user.id)
-                .maybeSingle();
-
-            if (rubiumError || !rubiumUser) {
-                showError('Аккаунт не найден в Rubium. Зарегистрируйтесь.');
-                await supabase.auth.signOut();
-                return;
-            }
-
-            window.location.href = 'index.html';
-        });
-
-        // === Логин через Stud&School ===
-        document.getElementById('loginStudForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const email = document.getElementById('studEmail').value.trim();
-            const password = document.getElementById('studPassword').value;
-            if (!email || !password) { showError('Заполните email и пароль'); return; }
-
-            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-            if (error) {
-                showError(error.message.includes('Invalid login credentials') ? 'Неверный email или пароль Stud&School' : error.message);
-                return;
-            }
-            if (!data.user) { showError('Ошибка входа'); return; }
-
-            // Проверяем, есть ли пользователь в rubium_users
-            const { data: rubiumUser, error: rubiumError } = await supabase
-                .from('rubium_users')
-                .select('*')
-                .eq('auth_id', data.user.id)
-                .maybeSingle();
-
-            // Если нет — создаём запись в rubium_users из данных Stud&School
-            if (rubiumError || !rubiumUser) {
-                // Получаем данные из Stud&School users
-                const { data: schoolUser, error: schoolError } = await supabase
-                    .from('users')
-                    .select('first_name, last_name, avatar_url')
-                    .eq('id', data.user.id)
-                    .maybeSingle();
-
-                if (schoolError || !schoolUser) {
-                    showError('Профиль Stud&School не найден');
-                    await supabase.auth.signOut();
-                    return;
+                if (error.message.includes('Invalid login credentials')) {
+                    showError('Неверный email или пароль');
+                } else {
+                    showError(error.message);
                 }
+                return;
+            }
 
-                // Создаём в rubium_users
+            if (!data.user) {
+                showError('Ошибка входа');
+                return;
+            }
+
+            // 2. Проверяем, есть ли пользователь в rubium_users
+            const { data: rubiumUser, error: rubiumError } = await supabase
+                .from('rubium_users')
+                .select('*')
+                .eq('auth_id', data.user.id)
+                .maybeSingle();
+
+            // Если нет — создаём
+            if (rubiumError || !rubiumUser) {
+                const name = data.user.user_metadata?.first_name || data.user.email?.split('@')[0] || 'ученик';
                 const { error: insertError } = await supabase
                     .from('rubium_users')
                     .upsert({
                         auth_id: data.user.id,
                         email: data.user.email,
-                        first_name: schoolUser.first_name || '',
-                        last_name: schoolUser.last_name || '',
-                        avatar_url: schoolUser.avatar_url || null,
-                        provider: 'stud_school',
+                        first_name: name,
+                        last_name: data.user.user_metadata?.last_name || '',
+                        status: 'user',
                         xp: 0,
                         level: 1,
                         streak: 0,
-                        last_streak_date: null,
                         tasks_solved: 0,
                         tasks_correct: 0,
                         accuracy: 0,
-                        daily_reminder: true,
-                        dark_mode: true,
-                        notifications_enabled: true,
                         created_at: new Date().toISOString(),
                         updated_at: new Date().toISOString()
                     }, { onConflict: 'auth_id' });
 
                 if (insertError) {
                     console.error('❌ Ошибка создания rubium_user:', insertError);
-                    showError('Ошибка синхронизации профиля');
+                    showError('Ошибка при входе');
                     await supabase.auth.signOut();
                     return;
                 }
-
-                console.log('✅ Создан rubium_user из Stud&School');
             }
 
             window.location.href = 'index.html';
         });
-
-        // === OAuth ===
-        async function loginWithOAuth(provider) {
-            const { error } = await supabase.auth.signInWithOAuth({
-                provider,
-                options: { redirectTo: window.location.origin + '/auth_callback.html' }
-            });
-            if (error) showError('Ошибка входа');
-        }
-
-        // Инициализация: Rubium режим по умолчанию
-        switchMode('rubium');
     </script>
 </body>
 </html>

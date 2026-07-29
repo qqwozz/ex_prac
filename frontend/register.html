@@ -10,60 +10,76 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase.js"></script>
     <style>
+        :root {
+            --bg: #0F0F1A;
+            --glass: rgba(255,255,255,0.04);
+            --glass-border: rgba(255,255,255,0.06);
+            --brand: #A78BFA;
+            --brand-glow: rgba(167,139,250,0.15);
+            --accent: #F472B6;
+            --text: #F1F5F9;
+            --text-secondary: #94A3B8;
+            --text-muted: #64748B;
+            --radius: 24px;
+            --radius-sm: 16px;
+            --success: #34D399;
+            --danger: #F87171;
+        }
         *{margin:0;padding:0;box-sizing:border-box}
         body{
-            font-family:'Inter',sans-serif;background:#FAF8FC;color:#1F2937;
+            font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--text);
             min-height:100vh;display:flex;align-items:center;justify-content:center;
             position:relative;overflow:hidden;-webkit-font-smoothing:antialiased
         }
-        body::before,body::after{
-            content:'';position:fixed;border-radius:50%;pointer-events:none;z-index:0;filter:blur(140px);opacity:0.04
+        body::before{
+            content:'';position:fixed;top:-300px;left:-300px;width:800px;height:800px;
+            background:radial-gradient(circle,rgba(167,139,250,0.06),transparent 70%);
+            pointer-events:none;z-index:0;
         }
-        body::before{width:620px;height:620px;background:#8B5CF6;top:-180px;right:-180px;animation:driftA 28s ease-in-out infinite}
-        body::after{width:460px;height:460px;background:#E11D8D;bottom:-130px;left:-130px;animation:driftB 32s ease-in-out infinite}
-        @keyframes driftA{0%,100%{transform:translate(0,0)}33%{transform:translate(-40px,30px)}66%{transform:translate(20px,-15px)}}
-        @keyframes driftB{0%,100%{transform:translate(0,0)}33%{transform:translate(30px,-25px)}66%{transform:translate(-15px,30px)}}
+        body::after{
+            content:'';position:fixed;bottom:-250px;right:-250px;width:700px;height:700px;
+            background:radial-gradient(circle,rgba(244,114,182,0.05),transparent 70%);
+            pointer-events:none;z-index:0;
+        }
 
         .auth-box{
-            background:rgba(255,255,255,0.65);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);
-            padding:44px 36px;border-radius:24px;width:90%;max-width:420px;
-            box-shadow:0 20px 50px rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.1);
-            position:relative;z-index:1;animation:fadeInUp 0.5s ease
+            background:var(--glass);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);
+            padding:44px 36px;border-radius:var(--radius);width:90%;max-width:400px;
+            border:1px solid var(--glass-border);position:relative;z-index:1;animation:fadeInUp 0.5s ease
         }
         @keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
 
         .logo{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:6px;text-decoration:none}
-        .logo img{width:42px;height:42px;object-fit:contain;filter:drop-shadow(0 4px 8px rgba(139,92,246,0.15))}
-        .logo-text{font-family:'Unbounded',sans-serif;font-size:1.4rem;font-weight:800;color:#1F2937;letter-spacing:-1px}
-        .logo-text span{background:linear-gradient(135deg,#8B5CF6,#E11D8D);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-        .subtitle{text-align:center;color:#9CA3AF;margin-bottom:32px;font-size:0.88rem;font-weight:500}
+        .logo-text{font-family:'Unbounded',sans-serif;font-size:1.4rem;font-weight:800;color:var(--text);letter-spacing:-1px}
+        .logo-text span{background:linear-gradient(135deg,var(--brand),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+        .subtitle{text-align:center;color:var(--text-secondary);margin-bottom:32px;font-size:0.88rem;font-weight:500}
 
         .form-group{margin-bottom:16px}
-        .form-group label{display:block;margin-bottom:8px;font-weight:700;color:#6B7280;font-size:0.7rem;text-transform:uppercase;letter-spacing:1.5px;font-family:'JetBrains Mono',monospace}
+        .form-group label{display:block;margin-bottom:8px;font-weight:700;color:var(--text-muted);font-size:0.7rem;text-transform:uppercase;letter-spacing:1.5px;font-family:'JetBrains Mono',monospace}
         .form-group input{
-            width:100%;padding:13px 16px;border:2px solid rgba(139,92,246,0.1);border-radius:14px;
-            font-family:inherit;font-size:0.92rem;background:rgba(255,255,255,0.5);color:#1F2937;
+            width:100%;padding:13px 16px;border:2px solid var(--glass-border);border-radius:var(--radius-sm);
+            font-family:inherit;font-size:0.92rem;background:rgba(255,255,255,0.03);color:var(--text);
             transition:all 0.3s ease;letter-spacing:-0.2px
         }
-        .form-group input:focus{outline:none;border-color:rgba(139,92,246,0.35);box-shadow:0 0 0 4px rgba(139,92,246,0.04);background:rgba(255,255,255,0.8)}
-        .form-group input::placeholder{color:#B0B7C3}
+        .form-group input:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 4px var(--brand-glow);background:rgba(255,255,255,0.05)}
+        .form-group input::placeholder{color:var(--text-muted)}
 
         .btn{width:100%;padding:14px;border:none;border-radius:50px;font-family:inherit;font-size:0.92rem;font-weight:700;cursor:pointer;transition:all 0.3s ease;letter-spacing:-0.3px}
-        .btn-primary{background:linear-gradient(135deg,#8B5CF6,#7C3AED);color:#fff;margin:6px 0 18px;box-shadow:0 6px 18px rgba(139,92,246,0.18)}
-        .btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(139,92,246,0.3);background:linear-gradient(135deg,#7C3AED,#6D28D9)}
+        .btn-primary{background:linear-gradient(135deg,var(--brand),#8B5CF6);color:#fff;margin:6px 0 18px;box-shadow:0 6px 18px var(--brand-glow)}
+        .btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(167,139,250,0.3);background:linear-gradient(135deg,#8B5CF6,#7C3AED)}
 
-        .error{background:rgba(239,68,68,0.04);color:#EF4444;padding:12px 14px;border-radius:12px;margin-bottom:18px;display:none;font-size:0.8rem;border:1.5px solid rgba(239,68,68,0.12);font-weight:500;text-align:center}
-        .success{background:rgba(16,185,129,0.04);color:#10B981;padding:12px 14px;border-radius:12px;margin-bottom:18px;display:none;font-size:0.8rem;border:1.5px solid rgba(16,185,129,0.12);font-weight:500;text-align:center}
+        .error{background:rgba(248,113,113,0.04);color:var(--danger);padding:12px 14px;border-radius:var(--radius-sm);margin-bottom:18px;display:none;font-size:0.8rem;border:1.5px solid rgba(248,113,113,0.12);font-weight:500;text-align:center}
+        .success{background:rgba(52,211,153,0.04);color:var(--success);padding:12px 14px;border-radius:var(--radius-sm);margin-bottom:18px;display:none;font-size:0.8rem;border:1.5px solid rgba(52,211,153,0.12);font-weight:500;text-align:center}
 
-        .link{text-align:center;margin-top:18px;font-size:0.85rem;color:#9CA3AF}
-        .link a{color:#8B5CF6;text-decoration:none;font-weight:600}
+        .link{text-align:center;margin-top:18px;font-size:0.85rem;color:var(--text-secondary)}
+        .link a{color:var(--brand);text-decoration:none;font-weight:600}
         .link a:hover{text-decoration:underline}
 
         .back-link{text-align:center;margin-top:16px;font-size:0.8rem}
-        .back-link a{color:#9CA3AF;text-decoration:none;display:inline-flex;align-items:center;gap:5px;transition:color 0.3s}
-        .back-link a:hover{color:#8B5CF6}
+        .back-link a{color:var(--text-muted);text-decoration:none;display:inline-flex;align-items:center;gap:5px;transition:color 0.3s}
+        .back-link a:hover{color:var(--brand)}
 
-        .strength-bar{height:3px;border-radius:2px;margin-top:6px;transition:all 0.3s;background:rgba(139,92,246,0.08)}
+        .strength-bar{height:3px;border-radius:2px;margin-top:6px;transition:all 0.3s;background:rgba(255,255,255,0.03)}
         .strength-fill{height:100%;border-radius:2px;transition:all 0.3s}
     </style>
 </head>
@@ -129,9 +145,9 @@
             if (/[0-9]/.test(pwd)) score++;
             if (/[^A-Za-z0-9]/.test(pwd)) score++;
 
-            const colors = ['#EF4444', '#F59E0B', '#F59E0B', '#84CC16', '#10B981'];
+            const colors = ['#F87171', '#FBBF24', '#FBBF24', '#34D399', '#34D399'];
             fill.style.width = (score * 20) + '%';
-            fill.style.background = colors[score] || '#EF4444';
+            fill.style.background = colors[score] || '#F87171';
         }
 
         // Выход перед регистрацией
@@ -183,7 +199,7 @@
                 return;
             }
 
-            // 2. Создаём запись в Rubium users (НЕ пишем в Stud&School)
+            // 2. Создаём запись в rubium_users
             const { error: rubiumError } = await supabase
                 .from('rubium_users')
                 .upsert({
@@ -191,7 +207,7 @@
                     email: user.email,
                     first_name: firstName,
                     last_name: lastName || '',
-                    provider: 'rubium',
+                    status: 'user',
                     xp: 0,
                     level: 1,
                     streak: 0,
@@ -199,9 +215,6 @@
                     tasks_solved: 0,
                     tasks_correct: 0,
                     accuracy: 0,
-                    daily_reminder: true,
-                    dark_mode: true,
-                    notifications_enabled: true,
                     created_at: new Date().toISOString(),
                     updated_at: new Date().toISOString()
                 }, { 
@@ -210,12 +223,12 @@
                 });
 
             if (rubiumError) {
-                console.error('❌ Rubium users insert error:', rubiumError);
+                console.error('❌ Ошибка создания rubium_user:', rubiumError);
                 showError('Ошибка при создании профиля');
                 return;
             }
 
-            console.log('✅ Rubium регистрация успешна:', user.email);
+            console.log('✅ Регистрация успешна:', user.email);
             showSuccess('Аккаунт создан! Перенаправляем...');
             setTimeout(() => {
                 window.location.href = 'index.html';

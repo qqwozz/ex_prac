@@ -290,6 +290,9 @@
         <a href="exam.html" class="nav-link"><i class="fas fa-file-pen"></i> Варианты</a>
         <a href="stats.html" class="nav-link"><i class="fas fa-chart-line"></i> Статистика</a>
         <a href="notebook.html" class="nav-link"><i class="fas fa-book"></i> Тетради</a>
+        <a href="admin.html" class="nav-link admin-link" id="adminLink" style="display:none">
+            <i class="fas fa-shield-halved"></i> Админ-панель
+        </a>
     </nav>
     <div class="sidebar-footer">
         <a href="profile.html">
@@ -298,9 +301,6 @@
                 <div class="sidebar-user-name" id="sidebarName">...</div>
                 <div class="sidebar-user-email" id="sidebarEmail">...</div>
             </div>
-            <button class="logout-btn" onclick="event.stopPropagation();logout()" title="Выйти">
-                <i class="fas fa-sign-out-alt"></i>
-            </button>
         </a>
     </div>
 </aside>
@@ -459,6 +459,10 @@
             .select('*')
             .eq('auth_id', user.id)
             .maybeSingle();
+
+        if (rubiumUser && rubiumUser.status === 'admin') {
+            document.getElementById('adminLink').style.display = 'flex';
+        }
 
         let name = 'ученик';
         let email = user.email || '';

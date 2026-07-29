@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Rubium — Профиль</title>
+    <link rel="icon" type="image/png" href="data/logo.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Unbounded:wght@600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase.js"></script>
+    <style>
+        :root {
+            --bg: #0F0F1A;
+            --sidebar-bg: rgba(255,255,255,0.02);
+            --surface: rgba(255,255,255,0.03);
+            --surface-hover: rgba(255,255,255,0.06);
+            --glass: rgba(255,255,255,0.04);
+            --glass-border: rgba(255,255,255,0.06);
+            --brand: #A78BFA;
+            --brand-glow: rgba(167,139,250,0.15);
+            --accent: #F472B6;
+            --success: #34D399;
+            --warning: #FBBF24;
+            --danger: #F87171;
+            --text: #F1F5F9;
+            --text-secondary: #94A3B8;
+            --text-muted: #64748B;
+            --radius: 24px;
+            --radius-sm: 16px;
+            --sidebar-width: 240px;
+        }
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{
+            font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--text);
+            min-height:100vh;min-height:100dvh;-webkit-font-smoothing:antialiased;
+            display:flex;overflow-x:hidden;
+        }
+        body::before{
+            content:'';position:fixed;top:-300px;left:-300px;width:800px;height:800px;
+            background:radial-gradient(circle,rgba(167,139,250,0.06),transparent 70%);
+            pointer-events:none;z-index:0;
+        }
+        body::after{
+            content:'';position:fixed;bottom:-250px;right:-250px;width:700px;height:700px;
+            background:radial-gradient(circle,rgba(244,114,182,0.05),transparent 70%);
+            pointer-events:none;z-index:0;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar{
+            position:fixed;left:0;top:0;bottom:0;z-index:100;
+            width:var(--sidebar-width);background:var(--sidebar-bg);
+            border-right:1px solid var(--glass-border);
+            backdrop-filter:blur(20px);
+            display:flex;flex-direction:column;
+            padding:20px 16px;
+            transition:transform 0.3s ease;
+        }
+        .sidebar-brand{
+            font-family:'Unbounded',sans-serif;font-size:1.3rem;font-weight:800;
+            padding:8px 12px 20px;letter-spacing:-1px;color:var(--text);
+            display:flex;align-items:center;gap:10px;
+        }
+        .sidebar-brand span{background:linear-gradient(135deg,var(--brand),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+        .sidebar-nav{flex:1;display:flex;flex-direction:column;gap:4px;padding:4px 0;overflow-y:auto}
+        .sidebar-nav::-webkit-scrollbar{width:3px}
+        .sidebar-nav::-webkit-scrollbar-thumb{background:var(--text-muted);border-radius:10px}
+
+        .nav-link{
+            display:flex;align-items:center;gap:14px;
+            padding:10px 14px;border-radius:var(--radius-sm);
+            color:var(--text-secondary);text-decoration:none;
+            font-size:0.85rem;font-weight:600;
+            transition:all 0.2s;letter-spacing:-0.2px;
+        }
+        .nav-link i{width:20px;font-size:1rem;text-align:center;flex-shrink:0}
+        .nav-link:hover{background:var(--surface-hover);color:var(--text)}
+        .nav-link.active{background:var(--brand-glow);color:var(--brand);box-shadow:0 0 20px var(--brand-glow)}
+        .nav-link .badge{
+            margin-left:auto;background:var(--brand);color:#0F0F1A;
+            font-size:0.55rem;font-weight:800;padding:2px 8px;border-radius:10px;
+            font-family:'JetBrains Mono',monospace;
+        }
+
+        .sidebar-footer{
+            border-top:1px solid var(--glass-border);padding-top:16px;margin-top:8px;
+        }
+        .sidebar-footer a{
+            text-decoration:none;color:inherit;display:flex;align-items:center;gap:12px;
+            padding:6px 8px;border-radius:var(--radius-sm);transition:background 0.2s;
+        }
+        .sidebar-footer a:hover{background:var(--surface-hover)}
+        .user-avatar{
+            width:36px;height:36px;border-radius:50%;
+            background:linear-gradient(135deg,var(--brand),var(--accent));
+            display:flex;align-items:center;justify-content:center;
+            font-weight:700;font-size:0.85rem;color:#fff;flex-shrink:0;
+        }
+        .sidebar-user-info{flex:1;min-width:0}
+        .sidebar-user-name{font-size:0.8rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .sidebar-user-email{font-size:0.65rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+        .logout-btn{
+            background:none;border:none;color:var(--text-muted);
+            cursor:pointer;padding:6px 8px;border-radius:8px;
+            transition:all 0.2s;font-size:0.9rem;margin-left:auto;
+        }
+        .logout-btn:hover{background:rgba(248,113,113,0.1);color:var(--danger)}
+
+        /* ===== MAIN CONTENT ===== */
+        .main-content{
+            margin-left:var(--sidebar-width);flex:1;min-height:100vh;min-height:100dvh;
+            display:flex;flex-direction:column;position:relative;z-index:1;
+        }
+
+        .topbar{
+            display:flex;align-items:center;justify-content:space-between;
+            padding:16px 32px;flex-shrink:0;
+            border-bottom:1px solid var(--glass-border);
+        }
+        .topbar-left{display:flex;align-items:center;gap:16px}
+        .hamburger{
+            display:none;background:none;border:none;color:var(--text);
+            font-size:1.3rem;cursor:pointer;padding:6px;
+        }
+        .page-title{font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--text-muted);font-family:'JetBrains Mono',monospace}
+
+        .content{
+            flex:1;padding:24px 32px 32px;
+            max-width:800px;margin:0 auto;width:100%;
+        }
+
+        /* ===== PROFILE ===== */
+        .profile-header{
+            display:flex;align-items:center;gap:24px;
+            padding:32px;background:var(--glass);border:1px solid var(--glass-border);
+            border-radius:var(--radius);margin-bottom:24px;
+            flex-wrap:wrap;
+        }
+        .profile-avatar{
+            width:80px;height:80px;border-radius:50%;
+            background:linear-gradient(135deg,var(--brand),var(--accent));
+            display:flex;align-items:center;justify-content:center;
+            font-size:2rem;font-weight:800;color:#fff;flex-shrink:0;
+        }
+        .profile-info{flex:1;min-width:150px}
+        .profile-info h1{font-size:1.5rem;font-weight:800;letter-spacing:-0.5px}
+        .profile-info .email{color:var(--text-secondary);font-size:0.85rem;margin-top:4px}
+        .profile-info .status{
+            display:inline-block;margin-top:6px;padding:2px 12px;
+            border-radius:12px;font-size:0.65rem;font-weight:700;
+            background:rgba(167,139,250,0.1);color:var(--brand);
+            font-family:'JetBrains Mono',monospace;text-transform:uppercase;
+        }
+        .profile-info .status.admin{background:rgba(251,191,36,0.1);color:var(--warning)}
+
+        .profile-stats{
+            display:grid;grid-template-columns:repeat(4,1fr);gap:12px;
+            margin-bottom:24px;
+        }
+        .stat-card{
+            background:var(--glass);border:1px solid var(--glass-border);
+            border-radius:var(--radius-sm);padding:16px 18px;text-align:center;
+        }
+        .stat-card .num{font-size:1.3rem;font-weight:800}
+        .stat-card .label{font-size:0.6rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;font-family:'JetBrains Mono',monospace;margin-top:2px}
+        .stat-card .num.gold{color:var(--warning)}
+        .stat-card .num.purple{color:var(--brand)}
+        .stat-card .num.green{color:var(--success)}
+        .stat-card .num.pink{color:var(--accent)}
+
+        .profile-section{
+            background:var(--glass);border:1px solid var(--glass-border);
+            border-radius:var(--radius);padding:24px;
+            margin-bottom:16px;
+        }
+        .profile-section-title{
+            font-size:0.8rem;font-weight:700;color:var(--text-secondary);
+            margin-bottom:16px;display:flex;align-items:center;gap:10px;
+        }
+        .profile-section-title i{color:var(--brand)}
+
+        .form-group{margin-bottom:14px}
+        .form-group label{
+            display:block;margin-bottom:6px;font-weight:700;color:var(--text-muted);
+            font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;
+            font-family:'JetBrains Mono',monospace;
+        }
+        .form-group input{
+            width:100%;padding:11px 14px;border:2px solid var(--glass-border);border-radius:var(--radius-sm);
+            font-family:inherit;font-size:0.9rem;background:rgba(255,255,255,0.02);color:var(--text);
+            transition:all 0.3s;
+        }
+        .form-group input:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 4px var(--brand-glow)}
+        .form-group input:disabled{opacity:0.4;cursor:not-allowed}
+
+        .btn-save{
+            padding:10px 28px;border:none;border-radius:50px;
+            background:linear-gradient(135deg,var(--brand),#8B5CF6);
+            color:#fff;font-weight:700;font-size:0.85rem;cursor:pointer;
+            transition:all 0.3s;font-family:inherit;
+        }
+        .btn-save:hover{transform:translateY(-2px);box-shadow:0 8px 24px var(--brand-glow)}
+
+        /* ===== MOBILE ===== */
+        @media (max-width: 768px) {
+            .sidebar{transform:translateX(-100%);width:280px}
+            .sidebar.open{transform:translateX(0)}
+            .main-content{margin-left:0}
+            .hamburger{display:block}
+            .topbar{padding:12px 16px}
+            .content{padding:16px}
+            .profile-header{flex-direction:column;text-align:center;padding:24px}
+            .profile-stats{grid-template-columns:repeat(2,1fr)}
+            .overlay{
+                display:none;position:fixed;inset:0;
+                background:rgba(0,0,0,0.5);z-index:99;
+            }
+            .overlay.show{display:block}
+        }
+        @media (max-width: 480px) {
+            .profile-stats{grid-template-columns:1fr}
+            .profile-header{padding:16px}
+            .profile-avatar{width:64px;height:64px;font-size:1.5rem}
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== OVERLAY ===== -->
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
+<!-- ===== SIDEBAR ===== -->
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">Rubium</div>
+    <nav class="sidebar-nav">
+        <a href="index.html" class="nav-link"><i class="fas fa-house"></i> Главная</a>
+        <a href="trainer.html" class="nav-link"><i class="fas fa-pencil"></i> Тренажёр</a>
+        <a href="daily.html" class="nav-link"><i class="fas fa-calendar-day"></i> Ежедневные</a>
+        <a href="exam.html" class="nav-link"><i class="fas fa-file-pen"></i> Варианты</a>
+        <a href="stats.html" class="nav-link"><i class="fas fa-chart-line"></i> Статистика</a>
+        <a href="notebook.html" class="nav-link"><i class="fas fa-book"></i> Тетради</a>
+        <a href="admin.html" class="nav-link admin-link" id="adminLink" style="display:none">
+            <i class="fas fa-shield-halved"></i> Админ-панель
+        </a>
+    </nav>
+    <div class="sidebar-footer">
+        <a href="profile.html">
+            <div class="user-avatar" id="sidebarAvatar">И</div>
+            <div class="sidebar-user-info">
+                <div class="sidebar-user-name" id="sidebarName">...</div>
+                <div class="sidebar-user-email" id="sidebarEmail">...</div>
+            </div>
+            <button class="logout-btn" onclick="event.stopPropagation();logout()" title="Выйти">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </a>
+    </div>
+</aside>
+
+<!-- ===== MAIN ===== -->
+<div class="main-content">
+    <header class="topbar">
+        <div class="topbar-left">
+            <button class="hamburger" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+            <span class="page-title">Профиль</span>
+        </div>
+    </header>
+
+    <div class="content">
+        <!-- Profile Header -->
+        <div class="profile-header" id="profileHeader">
+            <div class="profile-avatar" id="profileAvatar">И</div>
+            <div class="profile-info">
+                <h1 id="profileName">...</h1>
+                <div class="email" id="profileEmail">...</div>
+                <span class="status" id="profileStatus">user</span>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="profile-stats">
+            <div class="stat-card">
+                <div class="num gold" id="statLevel">1</div>
+                <div class="label">Уровень</div>
+            </div>
+            <div class="stat-card">
+                <div class="num purple" id="statXP">0</div>
+                <div class="label">XP</div>
+            </div>
+            <div class="stat-card">
+                <div class="num green" id="statSolved">0</div>
+                <div class="label">Решено</div>
+            </div>
+            <div class="stat-card">
+                <div class="num pink" id="statStreak">0</div>
+                <div class="label">Стрик 🔥</div>
+            </div>
+        </div>
+
+        <!-- Edit Form -->
+        <div class="profile-section">
+            <div class="profile-section-title"><i class="fas fa-pen"></i> Редактировать профиль</div>
+            <form id="profileForm">
+                <div class="form-group">
+                    <label>Имя</label>
+                    <input type="text" id="editFirstName" required>
+                </div>
+                <div class="form-group">
+                    <label>Фамилия</label>
+                    <input type="text" id="editLastName">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="editEmail" disabled>
+                </div>
+                <button type="submit" class="btn-save"><i class="fas fa-save"></i> Сохранить</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ===== SIDEBAR TOGGLE =====
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('overlay').classList.toggle('show');
+    }
+    function closeSidebar() {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('overlay').classList.remove('show');
+    }
+
+    let currentUser = null;
+
+    // ===== INIT =====
+    async function init() {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) { window.location.href = 'login.html'; return; }
+
+        const { data: rubiumUser, error } = await supabase
+            .from('rubium_users')
+            .select('*')
+            .eq('auth_id', user.id)
+            .maybeSingle();
+
+        if (error || !rubiumUser) {
+            window.location.href = 'login.html';
+            return;
+        }
+
+        currentUser = rubiumUser;
+
+        // Заполняем сайдбар
+        const name = rubiumUser.first_name || rubiumUser.email?.split('@')[0] || 'ученик';
+        document.getElementById('sidebarName').textContent = name;
+        document.getElementById('sidebarEmail').textContent = rubiumUser.email || '';
+        document.getElementById('sidebarAvatar').textContent = (name[0] || 'У').toUpperCase();
+
+        // Показываем админ-ссылку
+        if (rubiumUser.status === 'admin') {
+            document.getElementById('adminLink').style.display = 'flex';
+        }
+
+        // Заполняем профиль
+        document.getElementById('profileAvatar').textContent = (rubiumUser.first_name?.[0] || 'У').toUpperCase();
+        document.getElementById('profileName').textContent = `${rubiumUser.first_name || ''} ${rubiumUser.last_name || ''}`.trim() || 'Без имени';
+        document.getElementById('profileEmail').textContent = rubiumUser.email || '';
+        
+        const statusEl = document.getElementById('profileStatus');
+        statusEl.textContent = rubiumUser.status || 'user';
+        if (rubiumUser.status === 'admin') statusEl.classList.add('admin');
+
+        document.getElementById('statLevel').textContent = rubiumUser.level || 1;
+        document.getElementById('statXP').textContent = rubiumUser.xp || 0;
+        document.getElementById('statSolved').textContent = rubiumUser.tasks_solved || 0;
+        document.getElementById('statStreak').textContent = rubiumUser.streak || 0;
+
+        document.getElementById('editFirstName').value = rubiumUser.first_name || '';
+        document.getElementById('editLastName').value = rubiumUser.last_name || '';
+        document.getElementById('editEmail').value = rubiumUser.email || '';
+    }
+
+    // ===== UPDATE PROFILE =====
+    document.getElementById('profileForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const firstName = document.getElementById('editFirstName').value.trim();
+        const lastName = document.getElementById('editLastName').value.trim();
+
+        if (!firstName) {
+            alert('Имя обязательно');
+            return;
+        }
+
+        const { error } = await supabase
+            .from('rubium_users')
+            .update({
+                first_name: firstName,
+                last_name: lastName,
+                updated_at: new Date().toISOString()
+            })
+            .eq('auth_id', currentUser.auth_id);
+
+        if (error) {
+            alert('Ошибка: ' + error.message);
+            return;
+        }
+
+        // Обновляем отображение
+        document.getElementById('profileName').textContent = `${firstName} ${lastName}`.trim() || 'Без имени';
+        document.getElementById('profileAvatar').textContent = (firstName[0] || 'У').toUpperCase();
+        document.getElementById('sidebarName').textContent = firstName || 'ученик';
+        document.getElementById('sidebarAvatar').textContent = (firstName[0] || 'У').toUpperCase();
+
+        alert('Профиль обновлён ✅');
+    });
+
+    // ===== LOGOUT =====
+    async function logout() {
+        await supabase.auth.signOut();
+        window.location.href = 'login.html';
+    }
+
+    init();
+</script>
+</body>
+</html>
