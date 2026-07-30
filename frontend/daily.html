@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Rubium — Ежедневные задания</title>
+    <link rel="icon" type="image/png" href="data/logo.png">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Unbounded:wght@600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        :root {
+            --bg: #0F0F1A;
+            --sidebar-bg: rgba(255, 255, 255, 0.02);
+            --surface: rgba(255, 255, 255, 0.03);
+            --surface-hover: rgba(255, 255, 255, 0.06);
+            --glass: rgba(255, 255, 255, 0.04);
+            --glass-border: rgba(255, 255, 255, 0.06);
+            --brand: #A78BFA;
+            --brand-glow: rgba(167, 139, 250, 0.15);
+            --accent: #F472B6;
+            --success: #34D399;
+            --warning: #FBBF24;
+            --danger: #F87171;
+            --text: #F1F5F9;
+            --text-secondary: #94A3B8;
+            --text-muted: #64748B;
+            --radius: 24px;
+            --radius-sm: 16px;
+            --sidebar-width: 240px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            min-height: 100dvh;
+            -webkit-font-smoothing: antialiased;
+            display: flex;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -300px;
+            left: -300px;
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, rgba(167, 139, 250, 0.06), transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: -250px;
+            right: -250px;
+            width: 700px;
+            height: 700px;
+            background: radial-gradient(circle, rgba(244, 114, 182, 0.05), transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 100;
+            width: var(--sidebar-width);
+            background: var(--sidebar-bg);
+            border-right: 1px solid var(--glass-border);
+            backdrop-filter: blur(20px);
+            display: flex;
+            flex-direction: column;
+            padding: 20px 16px;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-brand {
+            font-family: 'Unbounded', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 800;
+            padding: 8px 12px 20px;
+            letter-spacing: -1px;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar-brand span {
+            background: linear-gradient(135deg, var(--brand), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding: 4px 0;
+            overflow-y: auto
+        }
+
+        .sidebar-nav::-webkit-scrollbar {
+            width: 3px
+        }
+
+        .sidebar-nav::-webkit-scrollbar-thumb {
+            background: var(--text-muted);
+            border-radius: 10px
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            letter-spacing: -0.2px;
+        }
+
+        .nav-link i {
+            width: 20px;
+            font-size: 1rem;
+            text-align: center;
+            flex-shrink: 0
+        }
+
+        .nav-link:hover {
+            background: var(--surface-hover);
+            color: var(--text)
+        }
+
+        .nav-link.active {
+            background: var(--brand-glow);
+            color: var(--brand);
+        }
+
+        .sidebar-footer {
+            border-top: 1px solid var(--glass-border);
+            padding-top: 16px;
+            margin-top: 8px;
+        }
+
+        .sidebar-footer a {
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 6px 8px;
+            border-radius: var(--radius-sm);
+            transition: background 0.2s;
+        }
+
+        .sidebar-footer a:hover {
+            background: var(--surface-hover)
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--brand), var(--accent));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: #fff;
+            flex-shrink: 0;
+        }
+
+        .sidebar-user-info {
+            flex: 1;
+            min-width: 0
+        }
+
+        .sidebar-user-name {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis
+        }
+
+        .sidebar-user-email {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis
+        }
+
+        .logout-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 6px 8px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+            margin-left: auto;
+        }
+
+        .logout-btn:hover {
+            background: rgba(248, 113, 113, 0.1);
+            color: var(--danger)
+        }
+
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 1;
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 32px;
+            flex-shrink: 0;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 16px
+        }
+
+        .hamburger {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text);
+            font-size: 1.3rem;
+            cursor: pointer;
+            padding: 6px;
+        }
+
+        .page-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace
+        }
+
+        .content {
+            flex: 1;
+            padding: 24px 32px 32px;
+            max-width: 1100px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .daily-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .daily-title {
+            font-size: 1.6rem;
+            font-weight: 800;
+            letter-spacing: -0.5px
+        }
+
+        .daily-title i {
+            color: var(--warning);
+            margin-right: 10px
+        }
+
+        .progress-ring {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            padding: 8px 20px 8px 16px;
+            border-radius: 50px;
+        }
+
+        .progress-ring .num {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--text)
+        }
+
+        .progress-ring .lbl {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace
+        }
+
+        .progress-ring .bar {
+            width: 80px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-ring .bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--brand), var(--accent));
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .filter-bar {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            padding: 12px 16px;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
+        }
+
+        .filter-btn {
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.75rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .filter-btn:hover {
+            border-color: var(--brand);
+            color: var(--text)
+        }
+
+        .filter-btn.active {
+            background: var(--brand-glow);
+            border-color: var(--brand);
+            color: var(--brand)
+        }
+
+        .subjects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 12px;
+            margin-bottom: 28px;
+        }
+
+        .subject-card {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
+            padding: 18px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: inherit;
+            color: var(--text-secondary);
+            text-align: left;
+        }
+
+        .subject-card:hover {
+            background: var(--surface-hover);
+            border-color: var(--brand);
+            transform: translateY(-2px)
+        }
+
+        .subject-card.active {
+            background: var(--brand-glow);
+            border-color: var(--brand);
+            color: var(--brand);
+            box-shadow: 0 0 24px var(--brand-glow)
+        }
+
+        .subject-card.done {
+            opacity: 0.4;
+            cursor: default
+        }
+
+        .subject-card.done:hover {
+            transform: none;
+            border-color: var(--glass-border)
+        }
+
+        .subject-card .card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px
+        }
+
+        .subject-card .icon {
+            font-size: 1.3rem
+        }
+
+        .subject-card .name {
+            font-size: 0.85rem;
+            font-weight: 600
+        }
+
+        .subject-card .meta-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            margin-top: 6px
+        }
+
+        .subject-card .meta-tag {
+            background: rgba(255, 255, 255, 0.04);
+            padding: 2px 8px;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .subject-card .check {
+            font-size: 0.6rem;
+            color: var(--success);
+            margin-top: 6px;
+            display: block
+        }
+
+        .back-btn {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-bottom: 16px;
+            transition: all 0.2s;
+        }
+
+        .back-btn:hover {
+            background: var(--surface-hover);
+            color: var(--text)
+        }
+
+        .back-btn.visible {
+            display: inline-flex
+        }
+
+        .tasks-container {
+            margin-top: 8px
+        }
+
+        .task-card {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius);
+            padding: 24px;
+            margin-bottom: 16px;
+            animation: fadeUp 0.4s ease;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(16px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        .task-meta {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .task-meta span {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 2px 10px;
+            border-radius: 12px;
+            border: 1px solid var(--glass-border)
+        }
+
+        .task-content {
+            font-size: 0.95rem;
+            line-height: 1.7;
+            color: var(--text-secondary);
+            margin-bottom: 16px
+        }
+
+        .task-content .katex-display {
+            margin: 8px 0
+        }
+
+        .answer-input {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.03);
+            border: 2px solid var(--glass-border);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .answer-input:focus {
+            border-color: var(--brand)
+        }
+
+        .answer-input:disabled {
+            opacity: 0.4;
+            cursor: not-allowed
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 12px
+        }
+
+        .btn {
+            padding: 8px 18px;
+            border: none;
+            border-radius: 12px;
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-check {
+            background: var(--brand);
+            color: #0F0F1A
+        }
+
+        .btn-check:hover:not(:disabled) {
+            background: #8B5CF6;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px var(--brand-glow)
+        }
+
+        .btn-check:disabled {
+            opacity: 0.4;
+            cursor: not-allowed
+        }
+
+        .btn-hint {
+            background: rgba(251, 191, 36, 0.1);
+            color: var(--warning);
+            border: 1px solid rgba(251, 191, 36, 0.1)
+        }
+
+        .btn-hint:hover {
+            background: rgba(251, 191, 36, 0.15)
+        }
+
+        .btn-reset {
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text-muted);
+            border: 1px solid var(--glass-border)
+        }
+
+        .btn-reset:hover {
+            background: var(--surface-hover);
+            color: var(--text)
+        }
+
+        .btn-next {
+            background: var(--glass);
+            color: var(--text);
+            border: 1px solid var(--glass-border);
+            width: 100%;
+            margin-top: 12px;
+            justify-content: center;
+        }
+
+        .btn-next:hover {
+            background: rgba(255, 255, 255, 0.06)
+        }
+
+        .task-result {
+            margin-top: 12px;
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            display: none;
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+
+        .task-result.correct {
+            display: block;
+            border-left: 3px solid var(--success);
+            background: rgba(52, 211, 153, 0.04)
+        }
+
+        .task-result.wrong {
+            display: block;
+            border-left: 3px solid var(--danger);
+            background: rgba(248, 113, 113, 0.04)
+        }
+
+        .task-result .correct-answer {
+            color: var(--success);
+            font-weight: 600
+        }
+
+        .task-result .wrong-answer {
+            color: var(--danger);
+            font-weight: 600
+        }
+
+        .task-result .solution {
+            margin-top: 6px;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            border-top: 1px solid var(--glass-border);
+            padding-top: 8px
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary)
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+            display: block
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 99
+        }
+
+        .overlay.show {
+            display: block
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                width: 280px
+            }
+
+            .sidebar.open {
+                transform: translateX(0)
+            }
+
+            .main-content {
+                margin-left: 0
+            }
+
+            .hamburger {
+                display: block
+            }
+
+            .topbar {
+                padding: 12px 16px
+            }
+
+            .content {
+                padding: 16px
+            }
+
+            .daily-title {
+                font-size: 1.2rem
+            }
+
+            .subjects-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px
+            }
+
+            .subject-card {
+                padding: 14px
+            }
+
+            .subject-card .name {
+                font-size: 0.75rem
+            }
+
+            .task-card {
+                padding: 16px
+            }
+
+            .progress-ring .bar {
+                width: 50px
+            }
+
+            .filter-bar {
+                gap: 4px;
+                padding: 10px
+            }
+
+            .filter-btn {
+                padding: 5px 10px;
+                font-size: 0.7rem
+            }
+
+            .overlay.show {
+                display: block
+            }
+        }
+
+        @media (max-width: 480px) {
+            .subjects-grid {
+                grid-template-columns: 1fr
+            }
+
+            .daily-header {
+                flex-direction: column;
+                align-items: stretch
+            }
+
+            .progress-ring {
+                justify-content: center
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">Rubium</div>
+        <nav class="sidebar-nav">
+            <a href="index.html" class="nav-link"><i class="fas fa-house"></i> Главная</a>
+            <a href="trainer.html" class="nav-link"><i class="fas fa-pencil"></i> Тренажёр</a>
+            <a href="daily.html" class="nav-link active"><i class="fas fa-calendar-day"></i> Ежедневные</a>
+            <a href="exam.html" class="nav-link"><i class="fas fa-file-pen"></i> Варианты</a>
+            <a href="stats.html" class="nav-link"><i class="fas fa-chart-line"></i> Статистика</a>
+            <a href="notebook.html" class="nav-link"><i class="fas fa-book"></i> Тетради</a>
+            <a href="admin.html" class="nav-link admin-link" id="adminLink" style="display:none">
+                <i class="fas fa-shield-halved"></i> Админ-панель
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="profile.html">
+                <div class="user-avatar" id="sidebarAvatar">И</div>
+                <div class="sidebar-user-info">
+                    <div class="sidebar-user-name" id="sidebarName">...</div>
+                    <div class="sidebar-user-email" id="sidebarEmail">...</div>
+                </div>
+                <button class="logout-btn" onclick="event.stopPropagation();logout()" title="Выйти">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </a>
+        </div>
+    </aside>
+
+    <div class="main-content">
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="hamburger" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                <span class="page-title">Ежедневные задания</span>
+            </div>
+        </header>
+
+        <div class="content">
+            <div class="daily-header">
+                <div class="daily-title"><i class="fas fa-calendar-day"></i> Ежедневные задания</div>
+                <div class="progress-ring">
+                    <span class="num" id="todayCount">0</span>
+                    <span class="lbl">/ <span id="dailyLimit">6</span></span>
+                    <div class="bar">
+                        <div class="bar-fill" id="progressFill" style="width:0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-bar" id="filterBar">
+                <button class="filter-btn active" data-filter="all">Все</button>
+                <button class="filter-btn" data-filter="EGE">ЕГЭ</button>
+                <button class="filter-btn" data-filter="OGE">ОГЭ</button>
+                <button class="filter-btn" data-filter="11">11 класс</button>
+                <button class="filter-btn" data-filter="10">10 класс</button>
+                <button class="filter-btn" data-filter="9">9 класс</button>
+            </div>
+
+            <button class="back-btn" id="backBtn" onclick="backToSubjects()">
+                <i class="fas fa-arrow-left"></i> Назад к предметам
+            </button>
+
+            <div class="subjects-grid" id="subjectsGrid"></div>
+            <div class="tasks-container" id="tasksContainer" style="display:none;">
+                <div class="empty-state" id="emptyState">
+                    <i class="fas fa-hand-peace"></i>
+                    <p>Выбери предмет, чтобы начать</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5080/api/v1';
+        const DAILY_LIMIT = 6;
+
+        let currentUser = null;
+        let rubiumUser = null;
+        let dailyState = { date: new Date().toISOString().split('T')[0], solved: 0, subjects: {} };
+        let currentTasks = [];
+        let currentSubject = null;
+        let answeredTasks = {};
+        let allTasks = [];
+        let activeFilter = 'all';
+        let attemptsCount = 0; // Считаем только уникальные попытки
+
+        const SUBJECT_NAMES = {
+            math: 'Математика', russian: 'Русский язык', physics: 'Физика',
+            chemistry: 'Химия', biology: 'Биология', history: 'История',
+            social_studies: 'Обществознание', english: 'Английский язык',
+            literature: 'Литература', informatics: 'Информатика'
+        };
+        const SUBJECT_ICONS = {
+            math: 'fa-calculator', russian: 'fa-language', physics: 'fa-atom',
+            chemistry: 'fa-flask', biology: 'fa-dna', history: 'fa-landmark',
+            social_studies: 'fa-scale-balanced', english: 'fa-language',
+            literature: 'fa-book-open', informatics: 'fa-laptop-code'
+        };
+        const EXAM_LABELS = { EGE: 'ЕГЭ', OGE: 'ОГЭ', university: 'ВУЗ' };
+        const LEVEL_LABELS = { '11': '11 кл', '10': '10 кл', '9': '9 кл', 'bachelor_1': '1 курс' };
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('overlay').classList.toggle('show');
+        }
+        function closeSidebar() {
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('overlay').classList.remove('show');
+        }
+
+        function loadDailyState() {
+            const stored = localStorage.getItem('rubium_daily');
+            if (stored) {
+                try {
+                    const parsed = JSON.parse(stored);
+                    if (parsed.date === new Date().toISOString().split('T')[0]) {
+                        dailyState = parsed; return;
+                    }
+                } catch (e) { }
+            }
+            dailyState = { date: new Date().toISOString().split('T')[0], solved: 0, subjects: {} };
+            saveDailyState();
+        }
+        function saveDailyState() { localStorage.setItem('rubium_daily', JSON.stringify(dailyState)); }
+        function getTodaySolved() { return dailyState.solved || 0; }
+        function isSubjectDone(subjectId) { return dailyState.subjects && dailyState.subjects[subjectId] === true; }
+        function markSubjectDone(subjectId) {
+            if (!dailyState.subjects) dailyState.subjects = {};
+            dailyState.subjects[subjectId] = true;
+            saveDailyState();
+        }
+        function incrementSolved() {
+            dailyState.solved = Math.min((dailyState.solved || 0) + 1, DAILY_LIMIT);
+            saveDailyState();
+        }
+        function getRemaining() { return Math.max(0, DAILY_LIMIT - getTodaySolved()); }
+
+        // Сначала LaTeX, потом Markdown — чтобы \ не съедались
+        function renderLatex(text) {
+            if (!text) return '';
+            if (text.includes('katex-html')) return text;
+
+            // Защищаем LaTeX-формулы от Markdown
+            const latexBlocks = [];
+            let result = text;
+
+            // Собираем все $...$ и $$...$$
+            result = result.replace(/\$\$([\s\S]*?)\$\$/g, (match) => {
+                latexBlocks.push({ type: 'block', content: match.slice(2, -2) });
+                return `%%LATEX${latexBlocks.length - 1}%%`;
+            });
+            result = result.replace(/\$([^\$]*?)\$/g, (match) => {
+                latexBlocks.push({ type: 'inline', content: match.slice(1, -1) });
+                return `%%LATEX${latexBlocks.length - 1}%%`;
+            });
+
+            // Экранируем оставшиеся \ от Markdown (вне формул)
+            result = result.replace(/\\/g, '\\\\');
+
+            // Markdown
+            result = marked.parse(result);
+
+            // Раскраниваем обратно
+            result = result.replace(/\\\\/g, '\\');
+
+            // Возвращаем LaTeX и рендерим
+            result = result.replace(/%%LATEX(\d+)%%/g, (_, i) => {
+                const block = latexBlocks[parseInt(i)];
+                const formula = block.content;
+                try {
+                    return katex.renderToString(formula, {
+                        displayMode: block.type === 'block',
+                        throwOnError: false
+                    });
+                } catch (e) {
+                    return `<code>${formula}</code>`;
+                }
+            });
+
+            return result;
+        }
+
+        function normalizeAnswer(answer) {
+            return answer.trim().toLowerCase().replace(/\.$/, '').replace(/\s+/g, ' ').replace(/[.,;:!?]$/, '');
+        }
+        function isAnswerCorrect(userAnswer, correctAnswer) {
+            const normUser = normalizeAnswer(userAnswer);
+            const normCorrect = normalizeAnswer(correctAnswer);
+            if (normUser === normCorrect) return true;
+            if (normCorrect.includes(normUser) && normUser.length > 2) return true;
+            if (normUser.includes(normCorrect) && normCorrect.length > 2) return true;
+            const numUser = parseFloat(normUser.replace(',', '.'));
+            const numCorrect = parseFloat(normCorrect.replace(',', '.'));
+            if (!isNaN(numUser) && !isNaN(numCorrect)) return Math.abs(numUser - numCorrect) < 0.01;
+            return false;
+        }
+
+        function getFilteredTasks() {
+            if (activeFilter === 'all') return allTasks;
+            return allTasks.filter(t => {
+                if (activeFilter === 'EGE' || activeFilter === 'OGE') return t.exam_type === activeFilter;
+                return t.level === activeFilter;
+            });
+        }
+
+        async function loadSubjects() {
+            try {
+                const res = await fetch(`${API_BASE}/tasks?limit=500`);
+                const data = await res.json();
+                allTasks = data.tasks || [];
+                renderSubjects();
+            } catch (e) {
+                console.error('Ошибка загрузки:', e);
+                document.getElementById('subjectsGrid').innerHTML =
+                    `<p style="color:var(--danger);grid-column:1/-1;text-align:center;padding:20px">Ошибка загрузки</p>`;
+            }
+        }
+
+        function renderSubjects() {
+            const filtered = getFilteredTasks();
+            const subjectsMap = {};
+            filtered.forEach(t => {
+                if (!subjectsMap[t.subject]) subjectsMap[t.subject] = { tasks: [], levels: new Set(), exams: new Set() };
+                subjectsMap[t.subject].tasks.push(t);
+                subjectsMap[t.subject].levels.add(t.level);
+                subjectsMap[t.subject].exams.add(t.exam_type);
+            });
+
+            const grid = document.getElementById('subjectsGrid');
+            const subjectIds = Object.keys(subjectsMap);
+            const remaining = getRemaining();
+
+            if (subjectIds.length === 0) {
+                grid.innerHTML = `<p style="color:var(--text-muted);grid-column:1/-1;text-align:center;padding:40px 0">Нет заданий по выбранному фильтру</p>`;
+                updateProgress();
+                return;
+            }
+
+            grid.innerHTML = subjectIds.map(subj => {
+                const info = subjectsMap[subj];
+                const count = info.tasks.length;
+                const done = isSubjectDone(subj);
+                const blocked = remaining <= 0 && !done;
+                const levelStr = [...info.levels].map(l => LEVEL_LABELS[l] || l).join(', ');
+                const examStr = [...info.exams].map(e => EXAM_LABELS[e] || e).join(', ');
+                return `
+                <button class="subject-card ${done ? 'done' : ''}" data-subject="${subj}"
+                        onclick="selectSubject('${subj}')" ${done || blocked ? 'disabled' : ''}>
+                    <div class="card-header">
+                        <span class="icon"><i class="fas ${SUBJECT_ICONS[subj] || 'fa-book'}"></i></span>
+                        <span class="name">${SUBJECT_NAMES[subj] || subj}</span>
+                    </div>
+                    <div class="meta-row">
+                        <span class="meta-tag"><i class="fas fa-layer-group"></i> ${levelStr}</span>
+                        <span class="meta-tag"><i class="fas fa-file-alt"></i> ${examStr}</span>
+                        <span class="meta-tag"><i class="fas fa-list"></i> ${count} задач</span>
+                    </div>
+                    ${done ? '<span class="check"><i class="fas fa-check-circle"></i> решено сегодня</span>' : ''}
+                    ${blocked && !done ? '<span class="check" style="color:var(--warning)"><i class="fas fa-lock"></i> лимит на сегодня</span>' : ''}
+                </button>
+            `;
+            }).join('');
+            updateProgress();
+        }
+
+        function updateProgress() {
+            const solved = getTodaySolved();
+            document.getElementById('todayCount').textContent = solved;
+            const pct = Math.min(100, (solved / DAILY_LIMIT) * 100);
+            document.getElementById('progressFill').style.width = pct + '%';
+        }
+
+        function backToSubjects() {
+            currentSubject = null;
+            currentTasks = [];
+            answeredTasks = {};
+            attemptsCount = 0;
+            document.getElementById('subjectsGrid').style.display = '';
+            document.getElementById('tasksContainer').style.display = 'none';
+            document.getElementById('backBtn').classList.remove('visible');
+            document.getElementById('filterBar').style.display = '';
+            renderSubjects();
+        }
+
+        async function selectSubject(subjectId) {
+            if (isSubjectDone(subjectId)) return;
+            if (getRemaining() <= 0) {
+                alert('🎯 Ты уже решил все 6 задач на сегодня! Возвращайся завтра.');
+                return;
+            }
+            currentSubject = subjectId;
+            answeredTasks = {};
+            attemptsCount = 0;
+
+            document.getElementById('subjectsGrid').style.display = 'none';
+            document.getElementById('filterBar').style.display = 'none';
+            document.getElementById('tasksContainer').style.display = '';
+            document.getElementById('backBtn').classList.add('visible');
+
+            const container = document.getElementById('tasksContainer');
+            container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)"><i class="fas fa-spinner fa-spin"></i> Загружаем задачи...</div>';
+
+            try {
+                const filtered = getFilteredTasks();
+                const tasks = filtered.filter(t => t.subject === subjectId);
+                if (tasks.length === 0) {
+                    container.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Для этого предмета пока нет задач</p></div>`;
+                    return;
+                }
+                const shuffled = tasks.sort(() => Math.random() - 0.5);
+                currentTasks = shuffled.slice(0, Math.min(6, getRemaining()));
+                renderTasks(currentTasks);
+            } catch (e) {
+                container.innerHTML = `<div class="empty-state"><i class="fas fa-bug"></i><p>Не удалось загрузить задачи</p></div>`;
+            }
+        }
+
+        function renderTasks(tasks) {
+            const container = document.getElementById('tasksContainer');
+            container.innerHTML = tasks.map((task, index) => `
+            <div class="task-card" id="task-${task.id}">
+                <div class="task-meta">
+                    <span><i class="fas fa-hashtag"></i> №${task.task_number || '?'}</span>
+                    <span><i class="fas fa-tag"></i> ${task.topic || 'Общее'}</span>
+                    <span><i class="fas fa-star"></i> ${'★'.repeat(task.difficulty || 1)}${'☆'.repeat(5 - (task.difficulty || 1))}</span>
+                    <span>${EXAM_LABELS[task.exam_type] || task.exam_type}</span>
+                    <span>${LEVEL_LABELS[task.level] || task.level}</span>
+                </div>
+                <div class="task-content" id="taskContent-${task.id}"></div>
+                <div id="answerArea-${task.id}"></div>
+                <div class="task-result" id="result-${task.id}"></div>
+            </div>
+        `).join('');
+
+            tasks.forEach(task => {
+                const el = document.getElementById(`taskContent-${task.id}`);
+                if (el) {
+                    let content = task.content || 'Задание без описания';
+                    content = renderLatex(content);
+                    el.innerHTML = content;
+                    if (typeof renderMathInElement === 'function') {
+                        try { renderMathInElement(el, { delimiters: [{ left: '$$', right: '$$', display: true }, { left: '$', right: '$', display: false }], throwOnError: false }); } catch (e) { }
+                    }
+                }
+                renderAnswerArea(task);
+            });
+        }
+
+        function renderAnswerArea(task) {
+            const container = document.getElementById(`answerArea-${task.id}`);
+            if (!container) return;
+            const blocked = getRemaining() <= 0 && !answeredTasks[task.id];
+            container.innerHTML = `
+            <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;align-items:flex-start">
+                <input type="text" class="answer-input" id="answerInput-${task.id}" 
+                       placeholder="Твой ответ" autocomplete="off" style="flex:1;min-width:200px;"
+                       ${blocked ? 'disabled' : ''}>
+                <div class="task-actions">
+                    <button class="btn btn-check" id="checkBtn-${task.id}" onclick="checkTask('${task.id}')" ${blocked ? 'disabled' : ''}>
+                        <i class="fas fa-check"></i> Проверить
+                    </button>
+                    <button class="btn btn-hint" onclick="showHint('${task.id}')">
+                        <i class="fas fa-lightbulb"></i> Подсказка
+                    </button>
+                    <button class="btn btn-reset" onclick="resetTask('${task.id}')">
+                        <i class="fas fa-undo"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+            const input = document.getElementById(`answerInput-${task.id}`);
+            if (input) {
+                input.addEventListener('keydown', function (e) { if (e.key === 'Enter') checkTask(task.id); });
+                if (!blocked) setTimeout(() => input.focus(), 100);
+            }
+        }
+
+        async function checkTask(taskId) {
+            // Проверка лимита ДО обработки
+            if (getRemaining() <= 0 && !answeredTasks[taskId]) {
+                alert('🎯 Лимит на сегодня исчерпан! 6/6 задач решено.');
+                return;
+            }
+
+            const task = currentTasks.find(t => t.id === taskId);
+            if (!task || answeredTasks[taskId]) return;
+
+            const resultEl = document.getElementById(`result-${taskId}`);
+            const checkBtn = document.getElementById(`checkBtn-${taskId}`);
+            const input = document.getElementById(`answerInput-${taskId}`);
+            let answer = input ? input.value.trim() : '';
+
+            if (!answer) {
+                resultEl.className = 'task-result wrong';
+                resultEl.innerHTML = '<i class="fas fa-pen"></i> Введи ответ перед проверкой';
+                resultEl.style.display = 'block';
+                return;
+            }
+
+            if (checkBtn) { checkBtn.disabled = true; checkBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; }
+
+            const correctAnswer = task.answer || '';
+            const isCorrect = isAnswerCorrect(answer, correctAnswer);
+            const explanation = task.solution || '';
+
+            answeredTasks[taskId] = true;
+            attemptsCount++;
+
+            incrementSolved();
+            updateProgress();
+            // Блокируем все оставшиеся инпуты если лимит исчерпан
+            if (getRemaining() <= 0) {
+                document.querySelectorAll('.answer-input').forEach(inp => inp.disabled = true);
+                document.querySelectorAll('.btn-check').forEach(btn => btn.disabled = true);
+            }
+
+            const renderedExplanation = renderLatex(explanation);
+            const renderedCorrect = renderLatex(correctAnswer);
+
+            if (isCorrect) {
+                resultEl.className = 'task-result correct';
+                resultEl.innerHTML = `
+                <i class="fas fa-check-circle"></i> <span class="correct-answer">Правильно!</span>
+                ${renderedExplanation ? `<div class="solution"><i class="fas fa-lightbulb"></i> Решение: ${renderedExplanation}</div>` : ''}
+            `;
+                document.getElementById(`task-${taskId}`).style.borderColor = 'var(--success)';
+                document.getElementById(`task-${taskId}`).dataset.solved = 'true';
+            } else {
+                resultEl.className = 'task-result wrong';
+                resultEl.innerHTML = `
+                <i class="fas fa-times-circle"></i> <span class="wrong-answer">Неправильно</span>
+                ${renderedCorrect ? `<div>Правильный ответ: <span class="correct-answer">${renderedCorrect}</span></div>` : ''}
+                ${renderedExplanation ? `<div class="solution"><i class="fas fa-lightbulb"></i> Решение: ${renderedExplanation}</div>` : ''}
+            `;
+            }
+            resultEl.style.display = 'block';
+            if (input) input.disabled = true;
+            if (checkBtn) { checkBtn.disabled = true; checkBtn.innerHTML = '<i class="fas fa-check"></i> Проверено'; }
+
+            // Проверяем, все ли решены
+            const allAttempted = currentTasks.every(t => answeredTasks[t.id]);
+            if (allAttempted && currentSubject) {
+                markSubjectDone(currentSubject);
+            }
+
+            if (getRemaining() <= 0) {
+                setTimeout(() => {
+                    alert('🎉 Ты решил все 6 ежедневных задач! Отлично! Возвращайся завтра.');
+                    backToSubjects();
+                }, 600);
+            }
+        }
+
+        function resetTask(taskId) {
+            if (answeredTasks[taskId]) return; // Не сбрасываем уже отвеченные
+            const input = document.getElementById(`answerInput-${taskId}`);
+            if (input) { input.value = ''; input.disabled = false; }
+            const resultEl = document.getElementById(`result-${taskId}`);
+            resultEl.style.display = 'none'; resultEl.className = 'task-result';
+        }
+
+        function showHint(taskId) {
+            const task = currentTasks.find(t => t.id === taskId);
+            if (!task) return;
+            const resultEl = document.getElementById(`result-${taskId}`);
+            resultEl.className = 'task-result';
+            resultEl.style.display = 'block';
+            resultEl.innerHTML = `
+            <div style="color:var(--warning);border-left:3px solid var(--warning);padding-left:12px">
+                <i class="fas fa-lightbulb"></i> Подсказка: ${renderLatex(task.solution || 'Подумай над ключевыми словами в условии')}
+            </div>
+        `;
+        }
+
+        async function logout() {
+            await supabase.auth.signOut();
+            window.location.href = 'login.html';
+        }
+
+        document.getElementById('filterBar').addEventListener('click', function (e) {
+            if (e.target.classList.contains('filter-btn')) {
+                document.querySelectorAll('#filterBar .filter-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                activeFilter = e.target.dataset.filter;
+                renderSubjects();
+            }
+        });
+
+        async function init() {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) { window.location.href = 'login.html'; return; }
+            const { data: ru, error } = await supabase
+                .from('rubium_users').select('*').eq('auth_id', user.id).maybeSingle();
+            if (error || !ru) { window.location.href = 'login.html'; return; }
+            rubiumUser = ru;
+            const name = ru.first_name || ru.email?.split('@')[0] || 'ученик';
+            document.getElementById('sidebarName').textContent = name;
+            document.getElementById('sidebarEmail').textContent = ru.email || '';
+            document.getElementById('sidebarAvatar').textContent = (name[0] || 'У').toUpperCase();
+            if (ru.status === 'admin') document.getElementById('adminLink').style.display = 'flex';
+            loadDailyState();
+            await loadSubjects();
+            updateProgress();
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+
+</html>
