@@ -1,20 +1,9 @@
-# app.py
 from flask import Flask
 from flask_cors import CORS
 from routes.proxy import proxy_bp
-from init import PYTHON_PORT, SUPABASE_URL, GO_PORT
-from time import sleep
 from routes.ai import ai_bp
-
-COLORS = {
-    "GREEN": "\033[32m",
-    "YELLOW": "\033[33m",
-    "RED": "\033[31m",
-    "CYAN": "\033[36m",
-    "GRAY": "\033[90m",
-    "BOLD": "\033[1m",
-    "RESET": "\033[0m",
-}
+from init import PYTHON_PORT
+from waitress import serve
 
 app = Flask(__name__)
 CORS(app, origins=[
@@ -27,13 +16,9 @@ CORS(app, origins=[
 
 app.register_blueprint(proxy_bp)
 app.register_blueprint(ai_bp)
+
 if __name__ == "__main__":
-    print(f"\n{COLORS['BOLD']}{COLORS['CYAN']}╔══════════════════════════════════════╗{COLORS['RESET']}")
-    print(f"{COLORS['BOLD']}{COLORS['CYAN']}║{COLORS['RESET']}   {COLORS['BOLD']}Rubium Python Server{COLORS['RESET']}              {COLORS['BOLD']}{COLORS['CYAN']} ║{COLORS['RESET']}")
-    print(f"{COLORS['BOLD']}{COLORS['CYAN']}╚══════════════════════════════════════╝{COLORS['RESET']}")
-    print(f"\n  {COLORS['GRAY']}Proxy:{COLORS['RESET']} :{PYTHON_PORT} → Go : {GO_PORT} → Supabase")
-    print(f"  {COLORS['GRAY']}AI:{COLORS['RESET']}    : {PYTHON_PORT} → DeepSeek")
-    print(f"  {COLORS['GRAY']}CORS:{COLORS['RESET']}  localhost: 5500, 5501, 5000")
-    print(f"\n  {COLORS['YELLOW']}Starting server...{COLORS['RESET']}\n")
-    sleep(1)
-    app.run(debug=False, port=PYTHON_PORT)
+    print(f"\n--- Rubium Python Server (waitress) ---")
+    print(f"  Port: {PYTHON_PORT}")
+    print(f"  CORS: localhost: 5500, 5501, 5000\n")
+    serve(app, host="0.0.0.0", port=PYTHON_PORT)
