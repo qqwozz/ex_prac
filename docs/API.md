@@ -1,526 +1,419 @@
-# Exam Trainer — API Reference (Go Backend)
 
-Актуальная документация Go API. Все эндпоинты, форматы запросов/ответов, ошибки и примеры.
+# Rubium API Reference (Go Backend)
 
----
+> 🆕 — новый | 🔧 — изменился | ✅ — без изменений
 
 ## Общая информация
 
-| Параметр | Значение |
-|----------|----------|
-| Базовый URL | `http://localhost:8080` |
-| Формат | JSON |
-| Версия API | v1 |
-| Кодировка | UTF-8 |
+| Параметр      | Значение                                          |
+| --------------------- | --------------------------------------------------------- |
+| Базовый URL    | `http://localhost:8080`                                 |
+| Прокси (Python) | `http://localhost:5080` → проброс `/api/v1/*` |
+| Формат          | JSON                                                      |
+| Версия API      | v1                                                        |
+| Кодировка    | UTF-8                                                     |
 
 ### Ограничения
 
-| Параметр | Значение |
-|----------|----------|
-| Максимум заданий за запрос | 100 (`limit` capped) |
-| Максимальный размер тела | 1 MB |
-| Таймаут подключения | 10s (read header), 30s (read/write), 120s (idle) |
-| Retry на Supabase | Макс. 2 ретрая, exponential backoff (200ms → 400ms → 800ms) |
-| Retry на 5xx | Да (сетевые ошибки + серверные ошибки Supabase) |
-| Retry на 4xx | Нет |
+| Параметр                                  | Значение                                                        |
+| ------------------------------------------------- | ----------------------------------------------------------------------- |
+| Максимум заданий за запрос | 100 (`limit` capped)                                                  |
+| Максимальный размер тела    | 1 MB                                                                    |
+| Таймаут подключения             | 10s (read header), 30s (read/write), 120s (idle)                        |
+| Retry на Supabase                               | Макс. 2 ретрая, exponential backoff (200ms → 400ms → 800ms) |
+| Retry на 5xx                                    | Да                                                                    |
+| Retry на 4xx                                    | Нет                                                                  |
 
 ### CORS
 
-Сервер разрешает запросы с origins:
+Разрешённые origins: `localhost:5500`, `localhost:5501`, `localhost:5080`, `localhost:3000` (и 127.0.0.1 аналоги)
 
-- `http://localhost:5500`
-- `http://localhost:5080`
-- `http://localhost:5081`
-- `http://localhost:3000`
-- `http://127.0.0.1:5500`
-- `http://127.0.0.1:5080`
-
-Разрешённые методы: `GET`, `POST`, `PUT`, `OPTIONS`
+Методы: `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `OPTIONS`
 
 ---
 
 ## Эндпоинты
 
-### GET /health
-
-Health-check эндпоинт. Возвращает статус сервера.
-
-**Ответ (200):**
+### GET /health ✅
 
 ```json
-{
-  "status": "ok"
-}
+{ "status": "ok" }
 ```
 
 ---
 
-### GET /api/v1/tasks
+## Задания (Tasks)
 
-Получить задание (или список заданий). Задания выдаются в **случайном порядке**.
+### GET /api/v1/tasks 🔧
 
-**Параметры (query):**
+**Параметры:**
 
-| Параметр | Тип | Обязательный | Описание |
-|----------|-----|--------------|----------|
-| `subject` | string | Да | Предмет: `math`, `informatics` |
-| `exam` | string | Нет | Тип экзамена: `ege`, `oge` |
-| `type` | string | Нет | Тип задания: `choice`, `number`, `string`, `multi`, `code`, `text` |
-| `topic` | string | Нет | Тема/модуль: `Производная`, `Программирование` и т.д. |
-| `difficulty` | integer | Нет | Максимальная сложность (1-5). Фильтр: `<=` указанному значению |
-| `task_number` | integer | Нет | Номер задания в экзамене (8, 16 и т.д.) |
-| `limit` | integer | Нет | Количество заданий (по умолчанию 1, максимум 100) |
+| Параметр | Тип  | Обязательный | Описание                                                                                                                              |
+| ---------------- | ------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `subject`      | string  | Да                     | `math`, `russian`, `physics`, `chemistry`, `biology`, `history`, `social_studies`, `english`, `literature`, `informatics` |
+| `exam_type`    | string  | Нет                   | `EGE`, `OGE`, `university`                                                                                                              |
+| `level`        | string  | Нет                   | `9`, `10`, `11`, `bachelor_1`                                                                                                         |
+| `topic`        | string  | Нет                   | Тема                                                                                                                                      |
+| `difficulty`   | integer | Нет                   | Сложность 1-5                                                                                                                        |
+| `task_number`  | integer | Нет                   | Номер задания                                                                                                                     |
+| `tags`         | string  | Нет                   | Теги через запятую                                                                                                            |
+| `limit`        | integer | Нет                   | По умолчанию 1, максимум 100                                                                                               |
 
 **Ответ (200):**
 
 ```json
 {
+  "count": 2,
   "tasks": [
     {
-      "id": "83b25796-49c5-4159-ae46-9e1196719288",
-      "content": "Напишите программу, которая...",
-      "answer": "-",
-      "solution": null,
-      "subject": "informatics",
-      "exam_type": "oge",
-      "level": "medium",
-      "topic": "Программирование",
+      "id": "02be48bf-1638-4c62-98e9-8c953618e790",
+      "content": "Найдите $\\sin \\alpha$, если $\\cos \\alpha = \\frac{3}{5}$",
+      "answer": "\\frac{4}{5}",
+      "solution": "$\\sin \\alpha = \\sqrt{1 - \\cos^2 \\alpha} = \\frac{4}{5}$",
+      "subject": "math",
+      "topic": "Тригонометрия",
+      "level": "11",
+      "exam_type": "EGE",
+      "difficulty": 2,
+      "task_number": 6,
       "task_type": "fipi",
-      "target_type": "all",
-      "target_id": null,
-      "created_by": "0f339b36-c20e-47d0-97f4-51ae9837333b",
-      "created_at": "2026-07-11T20:48:49.992368+00:00",
-      "task_number": 16,
-      "source": "Открытый банк ФИПИ",
-      "display_id": "#000002"
+      "tags": ["тригонометрия", "основное_тождество"],
+      "created_at": "2026-07-30T12:08:29.48185+00:00"
     }
-  ],
-  "count": 1
+  ]
 }
 ```
 
-**Поля задачи (tasks):**
+### GET /api/v1/tasks/:id 🔧
 
-| Поле | Тип | Описание |
-|------|-----|----------|
-| `id` | UUID | Уникальный идентификатор |
-| `content` | string | Условие задания (текст + LaTeX + ссылки на изображения) |
-| `answer` | string | Правильный ответ (для code/text — `"-"`) |
-| `solution` | string/null | Разбор решения |
-| `subject` | string | Предмет: `math`, `informatics` |
-| `exam_type` | string | Тип экзамена: `ege`, `oge` |
-| `level` | string | Уровень сложности: `base`, `medium`, `hard` |
-| `topic` | string | Тема/модуль |
-| `task_type` | string | Тип: `fipi` (банк ФИПИ), `ai` (сгенерировано) |
-| `target_type` | string | Для кого: `all`, `plus` |
-| `target_id` | UUID/null | Ссылка на конкретного пользователя |
-| `created_by` | UUID | Кто создал |
-| `created_at` | timestamp | Дата создания |
-| `task_number` | integer | Номер задания в экзамене |
-| `source` | string | Источник: `Открытый банк ФИПИ`, `ai`, `teacher` |
-| `display_id` | string | Читаемый ID: `#000001`, `#000002` |
+**Ответ (200):**
 
-**Примеры:**
+```json
+{ "task": { ... } }
+```
 
-```bash
-# Случайное задание по математике
-curl "http://localhost:8080/api/v1/tasks?subject=math"
+**404:** `{ "error": "задание не найдено" }`
 
-# 5 заданий по информатике, ОГЭ, номер 16
-curl "http://localhost:8080/api/v1/tasks?subject=informatics&exam=oge&task_number=16&limit=5"
+### POST /api/v1/check ✅
 
-# Задания по теме "Программирование" с сложностью <= 3
-curl "http://localhost:8080/api/v1/tasks?subject=informatics&topic=Программирование&difficulty=3&limit=10"
+**Тело:**
+
+```json
+{ "task_id": "uuid", "answer": "4/5" }
+```
+
+**Ответ:**
+
+```json
+{ "correct": true, "correct_answer": "\\frac{4}{5}", "explanation": "..." }
 ```
 
 ---
 
-### GET /api/v1/tasks/:id
+## Тетради (Notebooks) 🆕
 
-Получить одно задание по UUID.
+Все требуют `Authorization: Bearer <token>`, кроме GET для публичных и community.
 
-**Параметры (path):**
+### GET /api/v1/notebooks
 
-| Параметр | Тип | Описание |
-|----------|-----|----------|
-| `id` | UUID | Уникальный идентификатор задания |
+**Параметры:** `is_public` (bool, опционально)
 
 **Ответ (200):**
 
 ```json
 {
-  "task": {
-    "id": "83b25796-49c5-4159-ae46-9e1196719288",
-    "content": "Напишите программу...",
-    "answer": "-",
-    "subject": "informatics",
-    "exam_type": "oge",
-    "level": "medium",
-    "topic": "Программирование",
-    "task_type": "fipi",
-    "task_number": 16,
-    "source": "Открытый банк ФИПИ",
-    "display_id": "#000002"
+  "notebooks": [
+    {
+      "id": "uuid",
+      "title": "Тригонометрия ЕГЭ",
+      "color": "#A78BFA",
+      "tags": ["math", "EGE", "11"],
+      "is_public": false,
+      "sections_count": 3,
+      "pages_count": 12,
+      "views_count": 0,
+      "copies_count": 0,
+      "created_at": "...",
+      "updated_at": "..."
+    }
+  ]
+}
+```
+
+### POST /api/v1/notebooks
+
+**Тело:**
+
+```json
+{
+  "title": "Тригонометрия ЕГЭ",
+  "color": "#A78BFA",
+  "tags": ["math", "EGE", "11"],
+  "is_public": false
+}
+```
+
+| Поле      | Тип   | Обязательный | По умолчанию |
+| ------------- | -------- | ------------------------ | ----------------------- |
+| `title`     | string   | Да                     | —                      |
+| `color`     | string   | Нет                   | `#A78BFA`             |
+| `tags`      | []string | Нет                   | `[]`                  |
+| `is_public` | bool     | Нет                   | `false`               |
+
+**Ответ (201):** `{ "id": "uuid", "title": "...", ... }`
+
+### GET /api/v1/notebooks/:id
+
+Приватные — только владельцу, публичные — всем.
+
+**Ответ (200):**
+
+```json
+{
+  "notebook": {
+    "id": "uuid",
+    "title": "...",
+    "color": "#A78BFA",
+    "tags": ["math", "EGE"],
+    "is_public": true,
+    "sections_count": 3,
+    "pages_count": 12,
+    "views_count": 42,
+    "copies_count": 5,
+    "author": { "id": "uuid", "first_name": "Илья" },
+    "created_at": "...",
+    "updated_at": "..."
   }
 }
 ```
 
-**Пример:**
+### PUT /api/v1/notebooks/:id
 
-```bash
-curl "http://localhost:8080/api/v1/tasks/83b25796-49c5-4159-ae46-9e1196719288"
-```
+Только владелец. Все поля опциональны.
+
+**Тело:** `{ "title": "...", "color": "...", "tags": [...], "is_public": true }`
+
+**Ответ:** `{ "message": "тетрадь обновлена" }`
+
+### DELETE /api/v1/notebooks/:id
+
+Только владелец. Каскадное удаление разделов и страниц.
+
+**Ответ:** `{ "message": "тетрадь удалена" }`
+
+### POST /api/v1/notebooks/:id/copy
+
+Скопировать публичную тетрадь себе. Увеличивает `copies_count` оригинала.
+
+**Ответ (201):** `{ "id": "new-uuid", "title": "Тригонометрия ЕГЭ (копия)", ... }`
 
 ---
 
-### PUT /api/v1/tasks/:id
+## Разделы (Sections) 🆕
 
-Обновить задание по UUID. Обновляются только переданные поля (частичное обновление).
-
-**Параметры (path):**
-
-| Параметр | Тип | Описание |
-|----------|-----|----------|
-| `id` | UUID | Уникальный идентификатор задания |
-
-**Тело запроса (все поля опциональны):**
-
-```json
-{
-  "content": "Новое условие задания",
-  "answer": "42",
-  "solution": "Разбор решения",
-  "subject": "math",
-  "exam_type": "ege",
-  "level": "hard",
-  "topic": "Алгебра",
-  "task_type": "ai",
-  "task_number": 5,
-  "source": "ai"
-}
-```
-
-| Поле | Тип | Описание |
-|------|-----|----------|
-| `content` | string | Условие задания |
-| `answer` | string | Правильный ответ |
-| `solution` | string | Разбор решения |
-| `subject` | string | Предмет: `math`, `informatics` |
-| `exam_type` | string | Тип экзамена: `ege`, `oge` |
-| `level` | string | Уровень: `base`, `medium`, `hard` |
-| `topic` | string | Тема/модуль |
-| `task_type` | string | Тип: `fipi`, `ai` |
-| `task_number` | integer | Номер задания |
-| `source` | string | Источник |
+### GET /api/v1/notebooks/:id/sections
 
 **Ответ (200):**
 
 ```json
 {
-  "message": "задание обновлено"
+  "sections": [
+    {
+      "id": "uuid",
+      "notebook_id": "uuid",
+      "title": "Основные формулы",
+      "order_index": 0,
+      "pages_count": 4,
+      "created_at": "...",
+      "updated_at": "..."
+    }
+  ]
 }
 ```
 
-**Пример:**
+### POST /api/v1/notebooks/:id/sections
 
-```bash
-curl -X PUT "http://localhost:8080/api/v1/tasks/83b25796-49c5-4159-ae46-9e1196719288" \
-  -H "Content-Type: application/json" \
-  -d '{"answer": "42", "level": "hard"}'
-```
+Только владелец. `order_index` — автоматически в конец.
+
+**Тело:** `{ "title": "Основные формулы" }`
+
+**Ответ (201):** `{ "id": "uuid", "title": "...", "order_index": 3, ... }`
+
+### PUT /api/v1/notebooks/sections/:id
+
+Только владелец.
+
+**Тело:** `{ "title": "Новое название" }`
+
+### DELETE /api/v1/notebooks/sections/:id
+
+Только владелец. Каскадное удаление страниц.
+
+### PUT /api/v1/notebooks/:id/sections/reorder
+
+Только владелец.
+
+**Тело:** `{ "order": ["uuid-1", "uuid-3", "uuid-2"] }`
 
 ---
 
-### DELETE /api/v1/tasks/:id
+## Страницы (Pages) 🆕
 
-Удалить задание по UUID.
-
-**Параметры (path):**
-
-| Параметр | Тип | Описание |
-|----------|-----|----------|
-| `id` | UUID | Уникальный идентификатор задания |
+### GET /api/v1/notebooks/sections/:id/pages
 
 **Ответ (200):**
 
 ```json
 {
-  "message": "задание удалено"
+  "pages": [
+    {
+      "id": "uuid",
+      "section_id": "uuid",
+      "title": "Формулы приведения",
+      "content": { "type": "doc", "content": [] },
+      "source_task_id": null,
+      "order_index": 0,
+      "created_at": "...",
+      "updated_at": "..."
+    }
+  ]
 }
 ```
 
-**Пример:**
+| Поле           | Тип    | Описание                                         |
+| ------------------ | --------- | -------------------------------------------------------- |
+| `content`        | JSONB     | TipTap JSON (формат ProseMirror)                   |
+| `source_task_id` | UUID/null | Привязка к задаче из тренажёра |
 
-```bash
-curl -X DELETE "http://localhost:8080/api/v1/tasks/83b25796-49c5-4159-ae46-9e1196719288"
-```
+### POST /api/v1/notebooks/sections/:id/pages
 
----
+Только владелец. `order_index` — автоматически в конец.
 
-### POST /api/v1/check
-
-Проверить ответ ученика. Сервер сам определяет тип задания и выбирает метод проверки.
-
-**Тело запроса:**
+**Тело:**
 
 ```json
 {
-  "task_id": "83b25796-49c5-4159-ae46-9e1196719288",
-  "answer": "4"
+  "title": "Формулы приведения",
+  "content": { "type": "doc", "content": [] },
+  "source_task_id": null
 }
 ```
 
-| Поле | Тип | Обязательный | Описание |
-|------|-----|--------------|----------|
-| `task_id` | string | Да | UUID задания |
-| `answer` | string | Да | Ответ ученика |
+**Ответ (201):** `{ "id": "uuid", "section_id": "uuid", "title": "...", "order_index": 0, ... }`
+
+### PUT /api/v1/notebooks/pages/:id
+
+Только владелец. Все поля опциональны.
+
+**Тело:** `{ "title": "...", "content": {...} }`
+
+### DELETE /api/v1/notebooks/pages/:id
+
+Только владелец.
+
+### PUT /api/v1/notebooks/sections/:id/pages/reorder
+
+Только владелец.
+
+**Тело:** `{ "order": ["uuid-1", "uuid-3", "uuid-2"] }`
+
+---
+
+## Рейтинг (Rating) 🆕
+
+### POST /api/v1/notebooks/:id/rate
+
+Только для публичных тетрадей, не своей. Один голос на пользователя (перезаписывается).
+
+**Тело:** `{ "rating": 4 }` (1-5)
+
+**Ответ (200):** `{ "average_rating": 4.3, "total_ratings": 12 }`
+
+### GET /api/v1/notebooks/:id/rating
 
 **Ответ (200):**
 
 ```json
 {
-  "correct": true,
-  "correct_answer": "4",
-  "explanation": "Производная x^2 = 2x, при x=2: 2*2 = 4"
+  "average_rating": 4.3,
+  "total_ratings": 12,
+  "user_rating": 4
 }
 ```
 
-| Поле | Тип | Описание |
-|------|-----|----------|
-| `correct` | bool | Правильный ли ответ |
-| `correct_answer` | string | Правильный ответ |
-| `explanation` | string/null | Разбор решения (если есть) |
+`user_rating` = null если пользователь не ставил оценку.
 
-**Как работает проверка:**
+---
 
-| Тип задания | Метод проверки |
-|-------------|---------------|
-| `choice` | Сравнение строк (регистр-независимое, обрезка пробелов) |
-| `number` | Сравнение чисел с допуском ±0.01 (запятая = точка) |
-| `string` | Нормализация (нижний регистр, схлопывание пробелов) + сравнение |
-| `multi` | Сравнение множеств (порядок неважен, разделители: `,`, `;`, `|`) |
-| `code` | Пересылка в Python для запуска кода |
-| `text` | Пересылка в Python для AI-анализа |
+## Публичный каталог (Community) 🆕
 
-**Определение типа:**
-- Если `task_type` задан в БД — используется он
-- Если `task_type` пуст и `answer` равен `"-"` или пуст — тип = `code`
-- Иначе — тип = `choice`
+### GET /api/v1/notebooks/community
 
-**Примеры:**
+Без авторизации.
 
-```bash
-# Проверка математического задания
-curl -X POST "http://localhost:8080/api/v1/check" \
-  -H "Content-Type: application/json" \
-  -d '{"task_id": "83b25796-49c5-4159-ae46-9e1196719288", "answer": "4"}'
+**Параметры:**
 
-# Проверка ответа с запятой (нормализуется)
-curl -X POST "http://localhost:8080/api/v1/check" \
-  -H "Content-Type: application/json" \
-  -d '{"task_id": "...", "answer": "3,14"}'
+| Параметр | Тип  | По умолчанию | Описание                               |
+| ---------------- | ------- | ----------------------- | ---------------------------------------------- |
+| `search`       | string  | —                      | Поиск по названию и тегам |
+| `tags`         | string  | —                      | Теги через запятую             |
+| `sort`         | string  | `rating`              | `rating`, `newest`, `popular`            |
+| `page`         | integer | 1                       | Страница                               |
+| `limit`        | integer | 20                      | На странице (макс. 50)           |
+
+**Ответ (200):**
+
+```json
+{
+  "notebooks": [
+    {
+      "id": "uuid",
+      "title": "Тригонометрия для ЕГЭ",
+      "color": "#A78BFA",
+      "tags": ["math", "EGE", "тригонометрия"],
+      "average_rating": 4.5,
+      "total_ratings": 28,
+      "pages_count": 15,
+      "author": { "id": "uuid", "first_name": "Илья" },
+      "created_at": "..."
+    }
+  ],
+  "total": 142,
+  "page": 1,
+  "limit": 20
+}
 ```
+
+---
+
+## Профиль (Users) 🆕
+
+### PUT /api/v1/users/me/pinned-notebook
+
+Закрепить тетрадь в профиле.
+
+**Тело:** `{ "notebook_id": "uuid" }`
+
+**Ответ:** `{ "message": "тетрадь закреплена" }`
+
+### DELETE /api/v1/users/me/pinned-notebook
+
+Открепить тетрадь.
+
+**Ответ:** `{ "message": "тетрадь откреплена" }`
 
 ---
 
 ## Ошибки
 
-| Код | Описание | Пример |
-|-----|----------|--------|
-| `400` | Неверный запрос | Отсутствует `task_id` или `answer`, невалидный UUID, пустой payload |
-| `404` | Задание не найдено | Несуществующий `task_id` |
-| `500` | Внутренняя ошибка | Ошибка Supabase (сеть, таймаут), ошибка Python |
+| Код  | Описание                                                                                             |
+| ------- | ------------------------------------------------------------------------------------------------------------ |
+| `400` | Неверный запрос (отсутствуют поля, невалидный UUID)                   |
+| `401` | Не авторизован                                                                                  |
+| `403` | Нет доступа (чужая приватная тетрадь, попытка оценить свою) |
+| `404` | Не найдено                                                                                          |
+| `500` | Внутренняя ошибка                                                                            |
 
-**Формат ошибки:**
-
-```json
-{
-  "error": "нужны task_id и answer"
-}
-```
-
-```json
-{
-  "error": "задание не найдено"
-}
-```
-
-```json
-{
-  "error": "ошибка проверки через Python: Python вернул 500: ..."
-}
-```
+Формат: `{ "error": "описание ошибки" }`
 
 ---
-
-## Типы заданий
-
-### choice (выбор ответа)
-
-Задание с вариантами ответа. Проверяется точное совпадение строк с учётом регистра.
-
-```json
-{
-  "content": "Чему равна производная f(x) = x^2?",
-  "answer": "2x",
-  "task_type": "choice"
-}
-```
-
-### number (числовой ответ)
-
-Числовой ответ с допуском ±0.01. Запятая автоматически заменяется на точку.
-
-```json
-{
-  "content": "Вычислите интеграл от 0 до 1: x^2 dx",
-  "answer": "0.33",
-  "task_type": "number"
-}
-```
-
-### string (текстовый ответ)
-
-Строковый ответ. Нормализация: нижний регистр, схлопывание пробелов.
-
-```json
-{
-  "content": "Какой язык программирования является интерпретируемым?",
-  "answer": "Python",
-  "task_type": "string"
-}
-```
-
-### multi (множественный выбор)
-
-Несколько правильных ответов. Порядок неважен. Разделители: `,`, `;`, `|`.
-
-```json
-{
-  "content": "Какие из перечисленных чисел являются простыми?",
-  "answer": "2,3,5,7",
-  "task_type": "multi"
-}
-```
-
-### code (программирование)
-
-Задание на программирование. Ответ — код ученика. Проверяется через Python.
-
-```json
-{
-  "content": "Напишите программу, которая выводит сумму чисел...",
-  "answer": "-",
-  "task_type": "fipi"
-}
-```
-
-### text (текстовое задание)
-
-Развёрнутый текстовый ответ. Проверяется через Python (AI-анализ).
-
-```json
-{
-  "content": "Объясните, что такое полиморфизм в ООП",
-  "answer": "-",
-  "task_type": "text"
-}
-```
-
----
-
-## Интеграция с Python
-
-Для заданий типа `code` и `text` Go-сервер пересылает запрос в Python.
-
-**POST** `http://localhost:5080/ai/v1/check`
-
-```json
-{
-  "task_id": "uuid",
-  "task_type": "code",
-  "content": "условие задания",
-  "answer": "эталонный вывод",
-  "user_answer": "код ученика"
-}
-```
-
-**Ответ Python:**
-
-```json
-{
-  "correct": true
-}
-```
-
-**Ограничения:**
-- Таймаут: 15 секунд
-- Максимальный размер ответа: 1 МБ
-
----
-
-## Конфигурация
-
-### Переменные окружения (.env)
-
-| Переменная | Описание | Обязательная |
-|-----------|----------|--------------|
-| `PORT` | Порт Go-сервера (по умолчанию 8080) | Нет |
-| `SUPABASE_URL` | URL проекта Supabase | Да |
-| `SUPABASE_ANON_KEY` | Анонимный ключ Supabase | Да |
-| `SUPABASE_SERVICE_KEY` | Сервисный ключ Supabase (нужен для записи) | Да |
-| `PYTHON_URL` | URL Python-сервера (по умолчанию http://localhost:5080) | Нет |
-
-### config.yaml
-
-```yaml
-supabase:
-  url: "https://your-project.supabase.co"
-  anon_key: "${SUPABASE_ANON_KEY}"
-  service_key: "${SUPABASE_SERVICE_KEY}"
-
-server:
-  go_port: 8080
-```
-
----
-
-## Запуск
-
-```bash
-cd api
-go run cmd/server/main.go
-```
-
-Сервер автоматически запускает проверки при старте:
-- Конфигурация (env vars заданы, ключи различаются)
-- Подключение к БД (anon + service key)
-- Checker (все типы заданий)
-- HTTP-эндпоинты
-
-Если хотя бы одна проверка не пройдена — сервер не запустится.
-
----
-
-## Схема данных (Supabase)
-
-### Таблица tasks
-
-| Поле | Тип | Описание |
-|------|-----|----------|
-| `id` | UUID | Уникальный идентификатор |
-| `content` | TEXT | Условие задания |
-| `answer` | TEXT | Правильный ответ |
-| `solution` | TEXT | Разбор (nullable) |
-| `subject` | TEXT | Предмет: `math`, `informatics` |
-| `exam_type` | TEXT | Тип экзамена: `ege`, `oge` |
-| `level` | TEXT | Уровень: `base`, `medium`, `hard` |
-| `topic` | TEXT | Тема/модуль |
-| `task_type` | TEXT | Тип: `fipi`, `ai` |
-| `target_type` | TEXT | Для кого: `all`, `plus` |
-| `target_id` | UUID | Ссылка на пользователя (nullable) |
-| `created_by` | UUID | Кто создал |
-| `created_at` | TIMESTAMPTZ | Дата создания |
-| `task_number` | INTEGER | Номер задания |
-| `source` | TEXT | Источник |
-| `display_id` | TEXT | Читаемый ID |
