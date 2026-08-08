@@ -1,159 +1,105 @@
+# Rubium — База данных (Supabase)
 
-# Exam Trainer — База данных
-
-Актуальная схема Supabase (PostgreSQL). Данные получены напрямую из проекта.
+Актуальная схема на 08.08.2026.
 
 ---
 
 ## Таблица tasks
 
-Задания для тренажёра (ЕГЭ/ОГЭ по математике и информатике).
+Задания для тренажёра и ежедневных.
 
-| Поле | Тип | Описание |
-|------|-----|----------|
-| `id` | UUID | Уникальный идентификатор задания |
-| `content` | TEXT | Условие задания (текст + LaTeX + ссылки на изображения) |
-| `answer` | TEXT | Правильный ответ |
-| `solution` | TEXT | Разбор решения (nullable) |
-| `subject` | TEXT | Предмет: `math`, `informatics` |
-| `exam_type` | TEXT | Тип экзамена: `ege`, `oge` |
-| `level` | TEXT | Уровень сложности: `base`, `medium`, `hard` |
-| `topic` | TEXT | Тема/модуль: `Производная`, `Программирование` и т.д. |
-| `task_type` | TEXT | Тип задания: `fipi` (из банка ФИПИ), `ai` (сгенерировано) |
-| `target_type` | TEXT | Для кого: `all` (все), `plus` (только подписчики) |
-| `target_id` | UUID | Ссылка на конкретного пользователя (nullable) |
-| `created_by` | UUID | Кто создал задание (ссылка на users.id) |
-| `created_at` | TIMESTAMPTZ | Дата создания |
-| `task_number` | INTEGER | Номер задания в экзамене (8, 16 и т.д.) |
-| `source` | TEXT | Источник: `Открытый банк ФИПИ`, `ai`, `teacher` |
-| `display_id` | TEXT | Читаемый ID для отображения: `#000001`, `#000002` |
+| Поле          | Тип      | Nullable | Описание                                          |
+| ----------------- | ----------- | -------- | --------------------------------------------------------- |
+| `id`            | UUID        | NO       | PK                                                        |
+| `title`         | TEXT        | YES      | Заголовок задания                         |
+| `content`       | TEXT        | NO       | Условие (текст + LaTeX)                       |
+| `answer`        | TEXT        | NO       | Правильный ответ (LaTeX или текст) |
+| `solution`      | TEXT        | YES      | Разбор решения                               |
+| `subject`       | TEXT        | NO       | Предмет                                            |
+| `topic`         | TEXT        | NO       | Тема                                                  |
+| `level`         | TEXT        | NO       | Класс/курс:`9`, `10`, `11`, `bachelor_1` |
+| `exam_type`     | TEXT        | YES      | `EGE`, `OGE`, `university`                          |
+| `difficulty`    | INTEGER     | YES      | Сложность 1-5                                    |
+| `task_number`   | INTEGER     | YES      | Номер задания в экзамене             |
+| `code_template` | TEXT        | YES      | Шаблон кода                                     |
+| `tags`          | TEXT[]      | YES      | Массив тегов                                   |
+| `task_type`     | TEXT        | YES      | `fipi`, `ai`                                          |
+| `created_at`    | TIMESTAMPTZ | YES      | Дата создания                                 |
 
-### Пример данных
+---
+
+## Таблица rubium_users
+
+Пользователи платформы.
+
+| Поле                  | Тип      | Nullable | Описание                                         |
+| ------------------------- | ----------- | -------- | -------------------------------------------------------- |
+| `id`                    | UUID        | NO       | PK                                                       |
+| `auth_id`               | UUID        | NO       | FK → auth.users                                         |
+| `email`                 | TEXT        | NO       | Почта                                               |
+| `first_name`            | TEXT        | YES      | Имя                                                   |
+| `last_name`             | TEXT        | YES      | Фамилия                                           |
+| `avatar_url`            | TEXT        | YES      | Аватар                                             |
+| `xp`                    | INTEGER     | YES      | Опыт                                                 |
+| `level`                 | INTEGER     | YES      | Уровень пользователя                  |
+| `streak`                | INTEGER     | YES      | Дней подряд                                    |
+| `last_streak_date`      | DATE        | YES      | Последняя активность                  |
+| `tasks_solved`          | INTEGER     | YES      | Решено задач                                  |
+| `tasks_correct`         | INTEGER     | YES      | Правильно решено                          |
+| `accuracy`              | NUMERIC     | YES      | Процент правильных                      |
+| `status`                | TEXT        | YES      | `user` / `admin`                                     |
+| `created_at`            | TIMESTAMPTZ | YES      | Дата регистрации                          |
+| `updated_at`            | TIMESTAMPTZ | YES      | Последнее обновление                  |
+| `pinned_notebook_id` 🆕 | UUID        | YES      | FK → notebooks, закреплённая тетрадь |
+
+---
+
+## Таблица rubium_daily_stats
+
+Статистика ежедневных заданий.
+
+---
+
+## Таблица notebooks 🆕
+
+Тетради пользователей. Разделы и страницы хранятся в `content` (JSONB). Рейтинг — в `ratings` (JSONB).
+
+| Поле           | Тип      | Nullable | Default             | Описание                                                                   |
+| ------------------ | ----------- | -------- | ------------------- | ---------------------------------------------------------------------------------- |
+| `id`             | UUID        | NO       | gen_random_uuid()   | PK                                                                                 |
+| `user_id`        | UUID        | NO       | —                  | FK → auth.users                                                                   |
+| `title`          | TEXT        | NO       | —                  | Название                                                                   |
+| `color`          | TEXT        | YES      | `#A78BFA`         | HEX-цвет                                                                       |
+| `tags`           | TEXT[]      | YES      | `[]`              | Теги                                                                           |
+| `is_public`      | BOOLEAN     | YES      | `false`           | Публичная                                                                 |
+| `is_verified`    | BOOLEAN     | YES      | `false`           | Тетрадь разработчика (ставит админ-владелец) |
+| `content`        | JSONB       | YES      | `{"sections":[]}` | Разделы и страницы                                                 |
+| `ratings`        | JSONB       | YES      | `{}`              | `{"user_id": rating}` — оценки                                            |
+| `average_rating` | NUMERIC     | YES      | `0`               | Средняя оценка                                                        |
+| `views_count`    | INTEGER     | YES      | `0`               | Просмотры                                                                 |
+| `copies_count`   | INTEGER     | YES      | `0`               | Копирования                                                             |
+| `created_at`     | TIMESTAMPTZ | YES      | now()               |                                                                                    |
+| `updated_at`     | TIMESTAMPTZ | YES      | now()               |                                                                                    |
+
+**Структура `content`:**
 
 ```json
 {
-  "id": "83b25796-49c5-4159-ae46-9e1196719288",
-  "content": "Напишите программу, которая...",
-  "answer": "-",
-  "solution": null,
-  "subject": "informatics",
-  "exam_type": "oge",
-  "level": "medium",
-  "topic": "Программирование",
-  "task_type": "fipi",
-  "target_type": "all",
-  "target_id": null,
-  "created_by": "0f339b36-c20e-47d0-97f4-51ae9837333b",
-  "created_at": "2026-07-11T20:48:49.992368+00:00",
-  "task_number": 16,
-  "source": "Открытый банк ФИПИ",
-  "display_id": "#000002"
+  "sections": [
+    {
+      "id": "uuid",
+      "title": "Название раздела",
+      "pages": [
+        {
+          "id": "uuid",
+          "title": "Заголовок страницы",
+          "content": { "type": "doc", "content": [] },
+          "source_task_id": "uuid или null",
+          "created_at": "...",
+          "updated_at": "..."
+        }
+      ]
+    }
+  ]
 }
 ```
-
-### Запросы через PostgREST
-
-| Что нужно | Запрос |
-|-----------|--------|
-| Все задания | `GET /rest/v1/tasks?select=*` |
-| По предмету | `?subject=eq.math` |
-| По теме | `?topic=eq.Программирование` |
-| По экзамену | `?exam_type=eq.oge` |
-| По уровню | `?level=eq.medium` |
-| С лимитом | `?limit=5` |
-| Комбинированный | `?subject=eq.informatics&exam_type=eq.oge&limit=3` |
-
----
-
-## Таблица users
-
-Пользователи системы (ученики и преподаватели).
-
-| Поле | Тип | Описание |
-|------|-----|----------|
-| `id` | UUID | Уникальный идентификатор (совпадает с auth.users.id) |
-| `email` | TEXT | Email пользователя |
-| `role` | TEXT | Роль: `admin`, `teacher`, `student` |
-| `auth_provider` | TEXT | Провайдер авторизации: `email`, `google` и т.д. |
-| `created_at` | TIMESTAMPTZ | Дата регистрации |
-| `first_name` | TEXT | Имя |
-| `last_name` | TEXT | Фамилия |
-| `avatar_url` | TEXT | Ссылка на аватар (в Supabase Storage) |
-| `photo_url` | TEXT | Путь к фото |
-| `description` | TEXT | Описание / биография |
-| `subjects` | TEXT | Предметы (для преподавателей) |
-| `university` | TEXT | Университет |
-| `experience` | TEXT | Опыт преподавания |
-
-### Пример данных
-
-```json
-{
-  "id": "d41bc28c-df35-47c4-a508-cd46c394e980",
-  "email": "chabata33@yandex.ru",
-  "role": "admin",
-  "auth_provider": "email",
-  "created_at": "2026-06-30T09:18:53.280736+00:00",
-  "first_name": "Максим",
-  "last_name": "Ковалёв",
-  "avatar_url": "https://...supabase.co/storage/v1/object/public/avatars/...",
-  "description": "Студент МГТУ им. Баумана...",
-  "subjects": "Математика, Физика (ЕГЭ и ОГЭ)",
-  "university": "МГТУ им. Баумана",
-  "experience": "2 года преподавания"
-}
-```
-
----
-
-## Таблица attempts (planned)
-
-Попытки решения заданий учениками. **Пока не создана.**
-
-| Поле | Тип | Описание |
-|------|-----|----------|
-| `id` | UUID | Уникальный идентификатор попытки |
-| `user_id` | UUID | Ссылка на пользователя |
-| `task_id` | UUID | Ссылка на задание (tasks.id) |
-| `answer` | TEXT | Ответ ученика |
-| `correct` | BOOLEAN | Правильный ли ответ |
-| `created_at` | TIMESTAMPTZ | Время попытки |
-
----
-
-## Связи между таблицами
-
-```
-users (1) ──→ (N) tasks        — created_by
-users (1) ──→ (N) attempts     — user_id
-tasks (1) ──→ (N) attempts     — task_id
-```
-
----
-
-## Supabase Storage
-
-| Бакет | Назначение |
-|-------|------------|
-| `avatars` | Аватары пользователей |
-| `tasks-images` | Изображения к заданиям |
-
----
-
-## RLS (Row Level Security)
-
-| Таблица | Политика |
-|---------|----------|
-| `tasks` | Чтение — всем (anon), запись — только admin/teacher |
-| `users` | Чтение — свои данные, запись — свои данные |
-| `attempts` | Чтение — свои попытки, запись — все авторизованные |
-
----
-
-## Статистика по данным
-
-| Таблица | Записей | Последнее обновление |
-|---------|---------|---------------------|
-| `tasks` | 2 | 2026-07-11 |
-| `users` | 1 | 2026-06-30 |
-| `attempts` | — | таблица не создана |

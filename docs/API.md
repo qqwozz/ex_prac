@@ -1,4 +1,4 @@
-#  Rubium API Reference (Go Backend)
+# Rubium API Reference (Go Backend)
 
 > 🆕 — новый | 🔧 — изменился | ✅ — без изменений
 
