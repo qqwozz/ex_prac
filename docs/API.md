@@ -1,5 +1,4 @@
-
-# Rubium API Reference (Go Backend)
+#  Rubium API Reference (Go Backend)
 
 > 🆕 — новый | 🔧 — изменился | ✅ — без изменений
 
@@ -26,7 +25,7 @@
 
 ### CORS
 
-Разрешённые origins: `localhost:5500`, `localhost:5501`, `localhost:5080`, `localhost:3000` (и 127.0.0.1 аналоги)
+Разрешённые origins: `localhost:5500`, `localhost:5501`, `localhost:5080`, `localhost:3000` (и 127.0.0.1)
 
 Методы: `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `OPTIONS`
 
@@ -54,7 +53,7 @@
 | `exam_type`    | string  | Нет                   | `EGE`, `OGE`, `university`                                                                                                              |
 | `level`        | string  | Нет                   | `9`, `10`, `11`, `bachelor_1`                                                                                                         |
 | `topic`        | string  | Нет                   | Тема                                                                                                                                      |
-| `difficulty`   | integer | Нет                   | Сложность 1-5                                                                                                                        |
+| `difficulty`   | integer | Нет                   | Сложность 1-5 (фильтр ≤)                                                                                                      |
 | `task_number`  | integer | Нет                   | Номер задания                                                                                                                     |
 | `tags`         | string  | Нет                   | Теги через запятую                                                                                                            |
 | `limit`        | integer | Нет                   | По умолчанию 1, максимум 100                                                                                               |
@@ -114,6 +113,8 @@
 
 Все требуют `Authorization: Bearer <token>`, кроме GET для публичных и community.
 
+Тетрадь хранится как JSONB — разделы и страницы внутри поля `content`. Никаких отдельных таблиц для sections/pages.
+
 ### GET /api/v1/notebooks
 
 **Параметры:** `is_public` (bool, опционально)
@@ -129,6 +130,7 @@
       "color": "#A78BFA",
       "tags": ["math", "EGE", "11"],
       "is_public": false,
+      "is_verified": false,
       "sections_count": 3,
       "pages_count": 12,
       "views_count": 0,
@@ -149,7 +151,10 @@
   "title": "Тригонометрия ЕГЭ",
   "color": "#A78BFA",
   "tags": ["math", "EGE", "11"],
-  "is_public": false
+  "is_public": false,
+  "content": {
+    "sections": []
+  }
 }
 ```
 
@@ -159,6 +164,7 @@
 | `color`     | string   | Нет                   | `#A78BFA`             |
 | `tags`      | []string | Нет                   | `[]`                  |
 | `is_public` | bool     | Нет                   | `false`               |
+| `content`   | JSONB    | Нет                   | `{ "sections": [] }`  |
 
 **Ответ (201):** `{ "id": "uuid", "title": "...", ... }`
 
@@ -172,12 +178,29 @@
 {
   "notebook": {
     "id": "uuid",
-    "title": "...",
+    "title": "Тригонометрия ЕГЭ",
     "color": "#A78BFA",
     "tags": ["math", "EGE"],
     "is_public": true,
-    "sections_count": 3,
-    "pages_count": 12,
+    "is_verified": false,
+    "content": {
+      "sections": [
+        {
+          "id": "uuid",
+          "title": "Основные формулы",
+          "pages": [
+            {
+              "id": "uuid",
+              "title": "Формулы приведения",
+              "content": { "type": "doc", "content": [] },
+              "source_task_id": null,
+              "created_at": "...",
+              "updated_at": "..."
+            }
+          ]
+        }
+      ]
+    },
     "views_count": 42,
     "copies_count": 5,
     "author": { "id": "uuid", "first_name": "Илья" },
@@ -189,15 +212,34 @@
 
 ### PUT /api/v1/notebooks/:id
 
-Только владелец. Все поля опциональны.
+Только владелец. Сохраняет тетрадь целиком (автосейв с фронта). Все поля опциональны.
 
-**Тело:** `{ "title": "...", "color": "...", "tags": [...], "is_public": true }`
+**Тело:**
+
+```json
+{
+  "title": "Новое название",
+  "color": "#F472B6",
+  "tags": ["math", "EGE"],
+  "is_public": true,
+  "content": { "sections": [...] }
+}
+```
+
+| Поле        | Кто может                        | Описание                                                |
+| --------------- | ---------------------------------------- | --------------------------------------------------------------- |
+| `title`       | владелец                         |                                                                 |
+| `color`       | владелец                         |                                                                 |
+| `tags`        | владелец                         |                                                                 |
+| `is_public`   | владелец                         |                                                                 |
+| `content`     | владелец                         | вся структура разделов и страниц    |
+| `is_verified` | только админ-владелец | пометить как тетрадь разработчика |
 
 **Ответ:** `{ "message": "тетрадь обновлена" }`
 
 ### DELETE /api/v1/notebooks/:id
 
-Только владелец. Каскадное удаление разделов и страниц.
+Только владелец.
 
 **Ответ:** `{ "message": "тетрадь удалена" }`
 
@@ -206,116 +248,6 @@
 Скопировать публичную тетрадь себе. Увеличивает `copies_count` оригинала.
 
 **Ответ (201):** `{ "id": "new-uuid", "title": "Тригонометрия ЕГЭ (копия)", ... }`
-
----
-
-## Разделы (Sections) 🆕
-
-### GET /api/v1/notebooks/:id/sections
-
-**Ответ (200):**
-
-```json
-{
-  "sections": [
-    {
-      "id": "uuid",
-      "notebook_id": "uuid",
-      "title": "Основные формулы",
-      "order_index": 0,
-      "pages_count": 4,
-      "created_at": "...",
-      "updated_at": "..."
-    }
-  ]
-}
-```
-
-### POST /api/v1/notebooks/:id/sections
-
-Только владелец. `order_index` — автоматически в конец.
-
-**Тело:** `{ "title": "Основные формулы" }`
-
-**Ответ (201):** `{ "id": "uuid", "title": "...", "order_index": 3, ... }`
-
-### PUT /api/v1/notebooks/sections/:id
-
-Только владелец.
-
-**Тело:** `{ "title": "Новое название" }`
-
-### DELETE /api/v1/notebooks/sections/:id
-
-Только владелец. Каскадное удаление страниц.
-
-### PUT /api/v1/notebooks/:id/sections/reorder
-
-Только владелец.
-
-**Тело:** `{ "order": ["uuid-1", "uuid-3", "uuid-2"] }`
-
----
-
-## Страницы (Pages) 🆕
-
-### GET /api/v1/notebooks/sections/:id/pages
-
-**Ответ (200):**
-
-```json
-{
-  "pages": [
-    {
-      "id": "uuid",
-      "section_id": "uuid",
-      "title": "Формулы приведения",
-      "content": { "type": "doc", "content": [] },
-      "source_task_id": null,
-      "order_index": 0,
-      "created_at": "...",
-      "updated_at": "..."
-    }
-  ]
-}
-```
-
-| Поле           | Тип    | Описание                                         |
-| ------------------ | --------- | -------------------------------------------------------- |
-| `content`        | JSONB     | TipTap JSON (формат ProseMirror)                   |
-| `source_task_id` | UUID/null | Привязка к задаче из тренажёра |
-
-### POST /api/v1/notebooks/sections/:id/pages
-
-Только владелец. `order_index` — автоматически в конец.
-
-**Тело:**
-
-```json
-{
-  "title": "Формулы приведения",
-  "content": { "type": "doc", "content": [] },
-  "source_task_id": null
-}
-```
-
-**Ответ (201):** `{ "id": "uuid", "section_id": "uuid", "title": "...", "order_index": 0, ... }`
-
-### PUT /api/v1/notebooks/pages/:id
-
-Только владелец. Все поля опциональны.
-
-**Тело:** `{ "title": "...", "content": {...} }`
-
-### DELETE /api/v1/notebooks/pages/:id
-
-Только владелец.
-
-### PUT /api/v1/notebooks/sections/:id/pages/reorder
-
-Только владелец.
-
-**Тело:** `{ "order": ["uuid-1", "uuid-3", "uuid-2"] }`
 
 ---
 
@@ -341,7 +273,7 @@
 }
 ```
 
-`user_rating` = null если пользователь не ставил оценку.
+`user_rating` = null если не ставил.
 
 ---
 
@@ -371,6 +303,7 @@
       "title": "Тригонометрия для ЕГЭ",
       "color": "#A78BFA",
       "tags": ["math", "EGE", "тригонометрия"],
+      "is_verified": true,
       "average_rating": 4.5,
       "total_ratings": 28,
       "pages_count": 15,
@@ -390,15 +323,11 @@
 
 ### PUT /api/v1/users/me/pinned-notebook
 
-Закрепить тетрадь в профиле.
-
 **Тело:** `{ "notebook_id": "uuid" }`
 
 **Ответ:** `{ "message": "тетрадь закреплена" }`
 
 ### DELETE /api/v1/users/me/pinned-notebook
-
-Открепить тетрадь.
 
 **Ответ:** `{ "message": "тетрадь откреплена" }`
 
@@ -406,14 +335,15 @@
 
 ## Ошибки
 
-| Код  | Описание                                                                                             |
-| ------- | ------------------------------------------------------------------------------------------------------------ |
-| `400` | Неверный запрос (отсутствуют поля, невалидный UUID)                   |
-| `401` | Не авторизован                                                                                  |
-| `403` | Нет доступа (чужая приватная тетрадь, попытка оценить свою) |
-| `404` | Не найдено                                                                                          |
-| `500` | Внутренняя ошибка                                                                            |
+| Код  | Описание                  |
+| ------- | --------------------------------- |
+| `400` | Неверный запрос     |
+| `401` | Не авторизован       |
+| `403` | Нет доступа             |
+| `404` | Не найдено               |
+| `500` | Внутренняя ошибка |
 
 Формат: `{ "error": "описание ошибки" }`
 
----
+```
+```
